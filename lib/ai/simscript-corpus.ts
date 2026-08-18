@@ -142,6 +142,13 @@ export const KIND_CATALOG: KindInfo[] = [
   { kind: 'dsa', domain: 'widget', label: 'DSA Lab (C++ visualizer)', scenarioOnly: true },
   { kind: 'system', domain: 'widget', label: 'system boundary', scenarioOnly: true },
   { kind: 'code', domain: 'widget', label: 'SimScript IDE' },
+  { kind: 'gridtable', domain: 'widget', label: 'grid table', scenarioOnly: true },
+  { kind: 'chart', domain: 'widget', label: 'chart', scenarioOnly: true },
+  { kind: 'surface3d', domain: 'widget', label: '3D surface plot', scenarioOnly: true },
+  { kind: 'slider', domain: 'widget', label: 'slider control', scenarioOnly: true },
+  { kind: 'button', domain: 'widget', label: 'button control', scenarioOnly: true },
+  { kind: 'trigger', domain: 'widget', label: 'conditional trigger', scenarioOnly: true },
+  { kind: 'picture', domain: 'widget', label: 'placed image', scenarioOnly: true },
   // bare shapes
   { kind: 'rect', domain: 'shape', label: 'rectangle', scenarioOnly: true },
   { kind: 'circle', domain: 'shape', label: 'circle', scenarioOnly: true },
@@ -155,6 +162,7 @@ export const KNOWN_KINDS = new Set<string>([
   'lens', 'lightsource', 'mirror', 'screen', 'wavesource', 'waveboundary', 'transmissionline',
   'quantumwell', 'tunnelbarrier', 'heatblock', 'torsionpendulum', 'truth-table', 'dsa-lab',
   'dsalab', 'ide', 'simscript',
+  'grid-table', 'graph3d', 'surface-3d', '3d', 'image', 'img',
 ])
 
 // ── System prompt ────────────────────────────────────────────────────────────
@@ -176,7 +184,13 @@ var k = 25;                           // bare numbers become page variables
 
 LAYOUT
 - CIRCUITS: do NOT pass x/y — the auto-layout engine draws the schematic (series loops, parallel banks, amplifiers). Just create and connect.
-- MECHANICS/OPTICS/WAVES: DO pass x/y (canvas px, +y is down). Put ground below falling bodies. Optics sit left-to-right on one axis (same y).
+- MECHANICS/OPTICS/WAVES: DO pass x/y (canvas px, +y is down). There is NO auto-layout here — omit x/y and every body stacks on one pixel and explodes apart. Put ground below falling bodies. Optics sit left-to-right on one axis (same y).
+
+MAKING A SCENE ACTUALLY MOVE (a scene that draws but does not simulate is a failure)
+- spring/rope/rod/damper ARE the constraint. They do nothing until BOTH ends are attached — the physics binds them to whatever body each endpoint touches. Always connect both ends.
+- To join two physical bodies you MUST name the type: connect(a.centre, b.centre, "rod"). Plain connect() makes a "wire", which is ELECTRICAL and applies zero force — the bodies just fall apart.
+- Give bodies something to rest on or hang from: create("ground", …) below them, or a hinge/rod above. A body with no support falls off-canvas in about a second (fine only if free fall IS the question).
+- A hinge is a fixed pivot: hang a rod from it for a pendulum.
 
 KINDS (create) — params in ()
 - electrical: battery(V) ac-source(V,f) current-source(I) resistor(R) bulb(R) capacitor(C) inductor(L) potentiometer(R,ratio) switch(closed) fuse(Imax) gnd voltmeter ammeter wattmeter probe vcvs(gain) vccs(gm) ccvs(r) cccs(beta) transformer(n) three-phase-source(V,f) dc-machine electric-motor induction-motor pressure-plate
@@ -208,6 +222,30 @@ interface Sample {
 const S = (prompt: string, script: string): Sample => ({ prompt, script: script.trim() + '\n' })
 
 export const SCENARIOS: Sample[] = [
+  S('Add a styled title and a red-filled rounded box behind it.', `
+var box = create("rect", { x: 0, y: 0, width: 420, height: 90, fill: "#fee2e2", stroke: "#ef4444", strokeWidth: 2, radius: 16 });
+var title = create("text", { x: 20, y: 24, text: "# Experiment 1", textColor: "#991b1b", align: "center" });`),
+
+  S('Make a bar chart of quarterly sales.', `
+var ch = create("chart", { type: "bar", labels: ["Q1", "Q2", "Q3", "Q4"], series: { Sales: [12, 19, 14, 22] } });`),
+
+  S('Plot the 3D surface z = sin(x)*cos(y).', `
+var s3 = create("surface3d", { formula: "sin(x)*cos(y)", axis: "z" });`),
+
+  S('Add a 2x3 grid table with headers.', `
+var gt = create("gridtable", { rows: 2, cols: 3, cells: [["Name", "Mass", "Speed"], ["Block", "20", "8"]] });`),
+
+  S('Add a slider that controls the mass of a block in real time.', `
+var block = create("block", { x: 0, y: 0, mass: 20 });
+var sl = create("slider", { x: 0, y: 220, min: 1, max: 50, step: 1, value: 20, label: "Mass", targetParamName: "mass" });`),
+
+  S('Add a button that toggles a value and a trigger that fires when speed passes 30.', `
+var btn = create("button", { label: "Pulse", actionType: "toggle" });
+var trg = create("trigger", { x: 0, y: 120, sourceParamName: "speed", condition: ">", threshold: 30, actionType: "toggle" });`),
+
+  S('Dim a resistor and lock it so it cannot be dragged.', `
+var r = create("resistor", { R: 470, opacity: 0.4, locked: true });`),
+
   S('Build a voltage divider: 9V battery with 1k and 2k resistors in series, and measure the output across the 2k.', `
 var bat = create("battery", { V: 9 });
 var r1 = create("resistor", { R: 1000, name: "R1" });
@@ -367,6 +405,29 @@ var pivot = create("hinge", { x: 300, y: 120 });
 var bob = create("mass", { x: 300, y: 340, mass: 1 });
 connect(pivot.centre, bob.centre, "rod");
 graph.plot(bob.angle);`),
+
+  S('Hang a mass from the ceiling on a spring and let it bounce. Plot the height.', `
+var anchor = create("hinge", { x: 300, y: 80 });
+var bob = create("mass", { x: 300, y: 300, mass: 2 });
+var spr = create("spring", { length: 200, k: 40 });
+connect(spr.a, anchor.centre);
+connect(spr.b, bob.centre);
+graph.plot(bob.y);`),
+
+  S('Two blocks on the ground joined by a rod, pushed along together.', `
+var floor = create("ground", { x: 0, y: 500, width: 900 });
+var b1 = create("block", { x: 200, y: 420, mass: 4, vx: 6 });
+var b2 = create("block", { x: 400, y: 420, mass: 4 });
+connect(b1.centre, b2.centre, "rod");
+graph.plot(b2.vx);`),
+
+  S('A mass swinging on a rope from a fixed point.', `
+var top = create("hinge", { x: 320, y: 100 });
+var ball = create("mass", { x: 480, y: 260, mass: 1 });
+var line = create("rope", { length: 240 });
+connect(line.a, top.centre);
+connect(line.b, ball.centre);
+graph.plot(ball.speed);`),
 
   S('Projectile motion: launch a ball at 45 degrees and plot its trajectory (y vs x).', `
 var floor = create("ground", { x: 0, y: 520, width: 900 });
