@@ -46,6 +46,19 @@ const SIMULATE_RE = new RegExp(
     // machines, optics, fields
     'motor|transformer|generator|lens|mirror|diffraction|interference|grating',
     'magnetic field|electric field|charge moving|wave',
+    // data structures & algorithms -> the DSA Lab runs the C++ and animates it.
+    // Without this clause every one of these routed to explain and the lab was
+    // unreachable: even "open a DSA lab with merge sort" came back as prose.
+    'sort|sorting|search|binary tree|\\bbst\\b|\\bheap\\b|linked list|\\bstack\\b|\\bqueue\\b',
+    'traversal|traverse|\\bbfs\\b|\\bdfs\\b|breadth-?first|depth-?first|dijkstra|shortest path',
+    'recursion|recursive|backtrack|memoi[sz]|dynamic programming|\\bdsa\\b|data structure',
+    'algorithm|hash ?map|hash ?table|unordered_map|\\bmap\\b|\\bdeque\\b|priority ?queue',
+    'array|vector|pointer|struct|c\\+\\+|cpp',
+    // engineering economics -> the cashflow card draws the timeline AND
+    // computes PW/FW/AW/IRR/BC live, so these are buildable, not just prose.
+    'cash ?flow|\\bnpv\\b|\\birr\\b|\\bmarr\\b|present worth|future worth|annual worth',
+    'payback period|salvage|annuit|depreciat|benefit.{0,5}cost|capital recovery',
+    'engineering econom|rate of return|time value of money|compound interest',
     // explicit asks
     'simulate|simulation|animate|plot|graph|draw|build|show me',
   ].join('|'),

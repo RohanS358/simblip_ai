@@ -215,6 +215,20 @@ KINDS (create) — params in ()
 - optics: light-source thin-lens(f) optical-mirror optical-screen slit
 - waves/quantum: wave-source wave-boundary transmission-line quantum-well tunnel-barrier
 - widgets: note(text,color) text(text) formula(latex) table(headers,data,summary) truthtable(inputs,outputs) cashflow dsa(source: C++ code) system(domain) code(source)
+
+DSA LAB — create("dsa", { source: "…C++…" })
+- ANY data-structures or algorithms request (sorting, searching, traversal, recursion, linked lists, trees, graphs) is a DSA Lab, NOT a note and NOT a mechanics scene. The lab runs the C++ and animates every step.
+- source is ONE string of real C++ with \\n between lines. Needs #include <iostream>, using namespace std; and int main() { … return 0; }.
+- The interpreter is real: vector, stack, queue, deque, priority_queue, map, unordered_map, set, unordered_set, pair, string, struct, classes, pointers, references and recursion all execute. Prefer the STL container that fits — a raw array is only right when the question is about arrays.
+- A struct with left/right pointers renders as a live binary-tree view; map/set render as tables. Keep the data small (5-8 elements) so each step is watchable.
+- Use cout << … << endl to narrate what the algorithm just did; the output panel is part of the visualisation.
+
+CASH FLOW — create("cashflow", { spec: {…} })
+- ANY engineering-economics question (NPV/present worth, IRR, annual or future worth, payback, benefit-cost, depreciation, salvage) is a cashflow card. NEVER create it empty: an empty card makes the student do the data entry the question already gave you.
+- spec takes a real object: { description, marr, discrete: [{t, amount}], annuities: [{start, periods, every, amount}], salvage }.
+- marr is PERCENT per year (8 = 8%). amount is + for an inflow (up arrow) and − for an outflow (down arrow), so the initial investment is negative.
+- t and start are in YEARS and may be fractional: every: 0.5 is semiannual, 0.25 quarterly. An annuity's first payment lands at start + every.
+- The card computes present/future/annual worth, IRR, capital recovery and benefit-cost from the spec and shows them live — do NOT hand-calculate them into a note; put the numbers in the spec and let it solve.
 - shapes: rect circle line polygon (then addproperty to make them physical)
 
 ANCHORS (connect)
@@ -531,9 +545,47 @@ var lab = create("dsa", {
   source: "#include <iostream>\\nusing namespace std;\\nint main() {\\n  int a[6] = {5, 2, 8, 1, 9, 3};\\n  int n = 6;\\n  for (int i = 0; i < n - 1; i++) {\\n    for (int j = 0; j < n - 1 - i; j++) {\\n      if (a[j] > a[j + 1]) {\\n        int t = a[j]; a[j] = a[j + 1]; a[j + 1] = t;\\n      }\\n    }\\n  }\\n  cout << \\"done\\" << endl;\\n  return 0;\\n}\\n",
 });`),
 
+  S('Show me binary search running on a sorted vector.', `
+var lab = create("dsa", {
+  source: "#include <iostream>\\n#include <vector>\\nusing namespace std;\\nint main() {\\n  vector<int> a = {2, 5, 8, 12, 16, 23, 38};\\n  int target = 16;\\n  int lo = 0, hi = a.size() - 1, found = -1;\\n  while (lo <= hi) {\\n    int mid = (lo + hi) / 2;\\n    cout << \\"probe \\" << mid << \\" -> \\" << a[mid] << endl;\\n    if (a[mid] == target) { found = mid; break; }\\n    if (a[mid] < target) lo = mid + 1;\\n    else hi = mid - 1;\\n  }\\n  cout << \\"index \\" << found << endl;\\n  return 0;\\n}\\n",
+});`),
+
+  S('Build a binary search tree and show the insertions and an inorder traversal.', `
+var lab = create("dsa", {
+  source: "#include <iostream>\\nusing namespace std;\\nstruct Node {\\n  int val;\\n  Node* left;\\n  Node* right;\\n};\\nNode* insert(Node* root, int v) {\\n  if (root == nullptr) {\\n    Node* n = new Node();\\n    n->val = v;\\n    n->left = nullptr;\\n    n->right = nullptr;\\n    return n;\\n  }\\n  if (v < root->val) root->left = insert(root->left, v);\\n  else root->right = insert(root->right, v);\\n  return root;\\n}\\nvoid inorder(Node* root) {\\n  if (root == nullptr) return;\\n  inorder(root->left);\\n  cout << root->val << \\" \\";\\n  inorder(root->right);\\n}\\nint main() {\\n  Node* root = nullptr;\\n  int vals[7] = {50, 30, 70, 20, 40, 60, 80};\\n  for (int i = 0; i < 7; i++) root = insert(root, vals[i]);\\n  inorder(root);\\n  cout << endl;\\n  return 0;\\n}\\n",
+});`),
+
+  S('Demonstrate a stack and a queue side by side so students see LIFO versus FIFO.', `
+var lab = create("dsa", {
+  source: "#include <iostream>\\n#include <stack>\\n#include <queue>\\nusing namespace std;\\nint main() {\\n  stack<int> s;\\n  queue<int> q;\\n  for (int i = 1; i <= 4; i++) {\\n    s.push(i);\\n    q.push(i);\\n  }\\n  cout << \\"stack pops: \\";\\n  while (!s.empty()) { cout << s.top() << \\" \\"; s.pop(); }\\n  cout << endl << \\"queue pops: \\";\\n  while (!q.empty()) { cout << q.front() << \\" \\"; q.pop(); }\\n  cout << endl;\\n  return 0;\\n}\\n",
+});`),
+
+  S('Count word frequencies with an unordered_map to show how a hash map works.', `
+var lab = create("dsa", {
+  source: "#include <iostream>\\n#include <unordered_map>\\n#include <string>\\nusing namespace std;\\nint main() {\\n  string words[6] = {\\"red\\", \\"blue\\", \\"red\\", \\"green\\", \\"blue\\", \\"red\\"};\\n  unordered_map<string, int> freq;\\n  for (int i = 0; i < 6; i++) {\\n    freq[words[i]]++;\\n    cout << words[i] << \\" -> \\" << freq[words[i]] << endl;\\n  }\\n  return 0;\\n}\\n",
+});`),
+
+  S('Trace the recursion for fibonacci so the call stack is visible.', `
+var lab = create("dsa", {
+  source: "#include <iostream>\\nusing namespace std;\\nint fib(int n) {\\n  if (n <= 1) return n;\\n  return fib(n - 1) + fib(n - 2);\\n}\\nint main() {\\n  for (int i = 0; i <= 6; i++) {\\n    cout << \\"fib(\\" << i << \\") = \\" << fib(i) << endl;\\n  }\\n  return 0;\\n}\\n",
+});`),
+
   S('Set up an engineering-economics cash-flow diagram and a note asking for NPV at 8% MARR.', `
-var cf = create("cashflow", {});
-var n = create("note", { x: 520, y: 0, text: "Fill in the investments and annuities, MARR = 8%. NPV updates live.", color: "amber" });`),
+var cf = create("cashflow", { spec: { description: "Machine purchase", marr: 8, discrete: [{ t: 0, amount: -1000 }], annuities: [{ start: 0, periods: 4, every: 1, amount: 300 }], salvage: 0 } });
+var n = create("note", { x: 520, y: 0, text: "MARR = 8%. Present worth, IRR and annual worth update live on the card.", color: "amber" });`),
+
+  S('Draw the cash flow for a $10,000 machine returning $3,000 a year for 5 years, salvage $2,000, MARR 10%.', `
+var cf = create("cashflow", { spec: { description: "Machine, 5-year life", marr: 10, discrete: [{ t: 0, amount: -10000 }], annuities: [{ start: 0, periods: 5, every: 1, amount: 3000 }], salvage: 2000 } });`),
+
+  S('Find the IRR of a project costing 50000 up front that returns 15000 per year for 5 years.', `
+var cf = create("cashflow", { spec: { description: "IRR of the project", marr: 10, discrete: [{ t: 0, amount: -50000 }], annuities: [{ start: 0, periods: 5, every: 1, amount: 15000 }], salvage: 0 } });
+var n = create("note", { x: 520, y: 0, text: "IRR is the rate where present worth crosses zero — read it off the card.", color: "amber" });`),
+
+  S('Cash flow with semiannual payments of $800 for 3 years after a $4000 investment at 6% MARR.', `
+var cf = create("cashflow", { spec: { description: "Semiannual receipts", marr: 6, discrete: [{ t: 0, amount: -4000 }], annuities: [{ start: 0, periods: 3, every: 0.5, amount: 800 }], salvage: 0 } });`),
+
+  S('Compare present worth of an asset with an overhaul cost at year 3.', `
+var cf = create("cashflow", { spec: { description: "Asset with mid-life overhaul", marr: 12, discrete: [{ t: 0, amount: -25000 }, { t: 3, amount: -5000 }], annuities: [{ start: 0, periods: 6, every: 1, amount: 7000 }], salvage: 3000 } });`),
 
   S('Draw a mechanics system box, then a wheel on the ground inside it driven by a motor.', `
 var sys = create("system", { x: 0, y: 0, domain: "mechanics", width: 520, height: 360 });
@@ -654,7 +706,7 @@ var ${v} = create("${k.kind}", { x: 300, y: 380${k.params ? ', ' + Object.entrie
   if (k.domain === 'waves' || k.domain === 'quantum') {
     return S(`Add a ${k.label} to the page.`, `var ${v} = create("${k.kind}", { x: 100, y: 100 });`)
   }
-  if (k.kind === 'cashflow') return S('Add an empty cash-flow diagram to fill in.', `var cf = create("cashflow", {});`)
+  if (k.kind === 'cashflow') return S('Add a cash-flow diagram for a 1000 investment paying 300 a year at 8% MARR.', `var cf = create("cashflow", { spec: { description: "Investment", marr: 8, discrete: [{ t: 0, amount: -1000 }], annuities: [{ start: 0, periods: 4, every: 1, amount: 300 }], salvage: 0 } });`)
   if (k.kind === 'code') return S('Add a SimScript IDE block with a starter comment.', `var ide = create("code", { source: "// build something here\\n" });`)
   if (k.kind === 'line') return S('Draw a bare line shape.', `var l = create("line", { x: 100, y: 100, width: 200 });`)
   if (k.kind === 'polygon') return S('Draw a bare polygon shape.', `var p = create("polygon", { x: 100, y: 100, width: 90, height: 90 });`)
