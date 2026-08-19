@@ -16,7 +16,94 @@
 // This is a pure function on the prompt text — no model call, no latency. A
 // classifier round would cost more than the generation it is routing.
 
-export type Intent = 'simulate' | 'explain' | 'both'
+export type Intent = 'simulate' | 'explain' | 'both' | 'edit'
+
+/** Changing something that already exists, rather than building something
+ *  new. The verbs alone are not enough — "add a graph" is a build on an empty
+ *  board and an edit when a mass is selected — so classifyIntent only returns
+ *  'edit' when the caller says a page/selection is attached. That keeps this
+ *  conservative: with no context, nothing routes to edit and every existing
+ *  behaviour is unchanged. */
+const EDIT_RE = new RegExp(
+  [
+    // direct mutation verbs
+    'change|edit|modify|update|adjust|tweak|fix|correct|replace|rename',
+    'move|shift|align|resize|rotate|scale|reposition|centre|center',
+    'delete|remove|get rid of|clear',
+    'recolou?r|colou?r it|make it|set the|set its|increase|decrease|double|halve',
+    // Writing INTO something that already exists. This is the case the verb
+    // list missed: "write the definition of IRR in this textbox" is not a
+    // request for a new note, it is a request to fill the one selected — and
+    // it routed to simulate, which created a second note beside it.
+    '\\b(?:write|put|add|insert|type|fill|enter|paste)\\b[^.]*\\b(?:in|into|inside|on|to)\\b\\s+(?:this|that|the|it|here)',
+    '\\bfill (?:this|that|it|them)\\b|\\bfill in\\b',
+    // referring to what is already there. The noun list was too short: a
+    // user says textbox/box/label/card for the same thing the code calls a
+    // note or a text object.
+    'this (?:page|slide|note|object|one|text ?box|box|text|label|card|component|shape|table|graph|chart)',
+    '\\bthese\\b|\\bthe selected\\b|\\bselection\\b|\\bselected (?:one|object|item)s?\\b',
+  ].join('|'),
+  'i'
+)
+
+/** Writing/authoring verbs. Alone these are ambiguous — "write a note about
+ *  X" on an empty board is a build — but with something SELECTED the user is
+ *  almost always talking about the thing they just clicked. */
+const AUTHOR_RE =
+  /\b(?:write|rewrite|summari[sz]e|describe|explain|define|label|title|caption|list|answer|complete|expand|shorten|translate|reword|rephrase)\b/i
+
+/**
+ * Does this ask to change what is already on the page?
+ *
+ * `selected` is the strong signal. A user who has clicked an object and then
+ * types an instruction means THAT object: "write the definition of IRR in
+ * this textbox" created a second note beside the selected one until the
+ * selection was allowed to carry this weight. With nothing selected the
+ * decision falls back to explicit edit vocabulary, so an empty board still
+ * routes builds to SimScript.
+ */
+/** Builds a SCENE — a connected simulation, circuit or mechanism.
+ *
+ *  These must never route to the edit lane. Its op vocabulary can add a
+ *  spring and a mass but cannot join them, so "simulate a pendulum on this
+ *  page" produced loose parts instead of something that swings. SimScript
+ *  expresses the wiring, so a scene request belongs there even when a page is
+ *  attached — page-awareness comes from the digest and deterministic
+ *  placement, not from changing lanes. */
+const SCENE_RE =
+  /\b(?:simulate|simulation|circuit|pendulum|oscillat|spring[- ]mass|projectile|rectifier|amplifier|filter|motor|transformer|counter|flip-?flop|inclined plane|free fall|collision)\b/i
+
+/** Explicitly about things that are already here. When one of these is
+ *  present the user is describing the CURRENT contents, so a scene word later
+ *  in the sentence is a goal ("...to make a proper simulation"), not a
+ *  request to build a second one.
+ *
+ *  Measured failure this fixes: "can you edit their positions to make proper
+ *  simulation as these are weird" matched SCENE_RE on "simulation" and was
+ *  pulled out of the edit lane, so it re-created the entire page — a
+ *  duplicate pendulum, ground, graph and system box — instead of moving the
+ *  three objects the user had selected. */
+const REFERS_TO_EXISTING_RE =
+  /\b(?:their|these|those|them|this one|it)\b|\bthe selected\b|\bselection\b|\balready\b|\bcurrent\b/i
+
+export function wantsEdit(prompt: string, hasContext: boolean, selected = false): boolean {
+  if (!hasContext) return false
+
+  const editish = EDIT_RE.test(prompt)
+  // A scene word only wins when the prompt is NOT plainly about existing
+  // objects. "Simulate a pendulum" builds; "fix their positions to make a
+  // proper simulation" edits what is already there.
+  if (SCENE_RE.test(prompt) && !(editish && REFERS_TO_EXISTING_RE.test(prompt)) && !selectedEditish(prompt, selected)) {
+    return false
+  }
+  if (editish) return true
+  return selected && AUTHOR_RE.test(prompt)
+}
+
+/** With objects selected, a repair verb means "repair THESE" — a user does
+ *  not select three things and then ask for a fourth scene. */
+const REPAIR_RE = /\b(?:fix|repair|correct|sort out|clean up|tidy|rearrange|arrange|align|reposition|adjust|make (?:it|this|these|them) (?:a )?proper)\b/i
+const selectedEditish = (prompt: string, selected: boolean) => selected && REPAIR_RE.test(prompt)
 
 /** Asks for worked mathematics: a derivation, a proof, a calculation. */
 const EXPLAIN_RE = new RegExp(
@@ -123,8 +210,12 @@ const WRITTEN_ARTEFACT_RE =
  * the common shape of an exam question, so getting it wrong in the safe
  * direction (an extra scene) beats losing the derivation entirely.
  */
-export function classifyIntent(prompt: string): Intent {
+export function classifyIntent(prompt: string, hasContext = false, selected = false): Intent {
   const p = prompt.trim()
+  // An edit beats every other lane: the user is pointing at something on
+  // their page and asking for it to change, which neither a fresh scene nor a
+  // derivation answers. Gated on context so this can never fire by accident.
+  if (wantsEdit(p, hasContext, selected)) return 'edit'
   // A slide deck is written output, so it counts as a written artefact even
   // though "make me slides..." opens with a build verb. Same for "make me
   // notes/a summary on X" — but NOT "add a note" (a canvas object), which is
