@@ -17,6 +17,7 @@
 // they recover from "invalid anchor".
 
 import { KNOWN_KINDS } from './simscript-corpus'
+import { parseDiagram } from '@/lib/scene/diagram'
 import { BEHAVIOR_SPECS } from '@/lib/behaviors/registry'
 import {
   ANCHOR_INDEX, CHANNELS_BY_SYMBOL, DEFAULT_SYMBOL_CHANNELS, BODY_CHANNELS,
@@ -33,7 +34,13 @@ export interface LintResult {
   cleaned: string
 }
 
-const GENERIC_OK = new Set(['rect', 'circle', 'line', 'polygon'])
+export const GENERIC_OK = new Set(['rect', 'circle', 'line', 'polygon'])
+
+/** The create() call parser, shared with lib/ai/simscript-fix.ts so the
+ *  autofix pass reads exactly the calls this file checks — groups are
+ *  1: variable name, 2: quote, 3: kind, 4: props object (optional). */
+export const CREATE_CALL_SOURCE =
+  String.raw`(?:var|let|const)?\s*([a-zA-Z_$][\w$]*)\s*=\s*create\s*\(\s*(['"])([^'"]+)\2\s*(?:,\s*(\{[^{}]*\}))?\s*\)`
 
 /** Kinds that carry a rigidBody, so they stream motion channels. Mirrors
  *  MECHANICS_COMPONENTS in lib/scene/simscript.ts. */
@@ -88,7 +95,7 @@ function stripComments(source: string): string {
  * The enabling primitive for every semantic check below: without knowing
  * which kind a variable holds, `connect(a.foo, b.bar)` is unverifiable.
  */
-function varKinds(source: string): Record<string, string> {
+export function varKinds(source: string): Record<string, string> {
   const out: Record<string, string> = {}
   const re = /(?:var|let|const)?\s*([a-zA-Z_$][\w$]*)\s*=\s*create\s*\(\s*(['"])([^'"]+)\2/g
   let m: RegExpExecArray | null
@@ -116,7 +123,7 @@ const isChained = (arg: string): boolean => /^[a-zA-Z_$][\w$]*(?:\s*\.\s*[a-zA-Z
 /** Does `kind` accept `anchor`? Mirrors resolveAnchor's lookup order exactly
  *  (raw name, then input→in / output→out normalized, then _t2, then the
  *  positional fallbacks) so a name the runtime WOULD resolve never errors. */
-function anchorValid(kind: string, anchor: string): boolean {
+export function anchorValid(kind: string, anchor: string): boolean {
   if (POSITIONAL_ANCHOR.test(anchor)) return true
   const norm = anchor.replace(/^input/i, 'in').replace(/^output/i, 'out')
   const map = ANCHOR_INDEX[kind] ?? {}
@@ -133,7 +140,7 @@ function anchorValid(kind: string, anchor: string): boolean {
  */
 const PREFERRED_ANCHORS = ['a', 'b', 'positive', 'negative', 'anode', 'cathode', 'in', 'out']
 
-function anchorNames(kind: string): string[] {
+export function anchorNames(kind: string): string[] {
   const all = Object.keys(ANCHOR_INDEX[kind] ?? {})
   const preferred = PREFERRED_ANCHORS.filter((n) => all.includes(n))
   const rest = all.filter((n) => !preferred.includes(n))
@@ -142,7 +149,10 @@ function anchorNames(kind: string): string[] {
 
 /** Line-kind mechanics components that ONLY exist as a constraint between two
  *  bodies. Mirrors MECHANICS_COMPONENTS in lib/scene/simscript.ts. */
-const CONNECTOR_KINDS = new Set(['spring', 'rope', 'rod', 'damper'])
+/** The properties every object has, so a control may always aim at them. */
+export const GEOMETRY_PARAMS = ['x', 'y', 'width', 'height', 'rotation']
+
+export const CONNECTOR_KINDS = new Set(['spring', 'rope', 'rod', 'damper'])
 
 /** Kinds that fall under gravity, so a scene containing one usually wants
  *  something to land on. */
@@ -151,16 +161,16 @@ const FALLING_KINDS = new Set(['mass', 'block', 'beam', 'wheel', 'motor'])
 /** Kinds that are positioned by hand rather than by the circuit auto-layout —
  *  every mechanics/optics/waves kind. Circuit symbols are deliberately absent:
  *  passing x/y to those fights the schematic layout engine. */
-const PLACED_KINDS = new Set([
+export const PLACED_KINDS = new Set([
   ...CONNECTOR_KINDS, ...FALLING_KINDS,
   'ground', 'hinge', 'charge', 'efield', 'bfield', 'heat-block', 'heatblock',
   'torsion-pendulum', 'torsionpendulum', 'reference-point',
   'light-source', 'lightsource', 'thin-lens', 'lens', 'optical-mirror',
-  'optical-screen', 'slit', 'wave-source', 'wave-boundary',
+  'optical-screen', 'slit', 'prism', 'glass-block', 'glassblock', 'wave-source', 'wave-boundary',
 ])
 
 /** The channels a kind really publishes, for graph.plot checking. */
-function channelsOf(kind: string): string[] {
+export function channelsOf(kind: string): string[] {
   if (kind === 'dielectric') return [...DIELECTRIC_CHANNELS]
   if (MECHANICS_KINDS.has(kind)) return [...BODY_CHANNELS]
   if (SILENT_SYMBOLS.includes(kind)) return []
@@ -189,7 +199,7 @@ const BEHAVIORS_BY_KIND: Record<string, string[]> = {
  *  Returns [] for a kind we cannot resolve (a circuit symbol, an unknown),
  *  and the caller treats that as "cannot check" rather than "illegal" — a
  *  false positive here would reject a working script. */
-function paramsOf(kind: string): string[] {
+export function paramsOf(kind: string): string[] {
   const behaviors = BEHAVIORS_BY_KIND[kind]
   if (!behaviors) return []
   const out = new Set<string>()
@@ -197,6 +207,47 @@ function paramsOf(kind: string): string[] {
     for (const p of BEHAVIOR_SPECS.find((sp) => sp.type === b)?.params ?? []) out.add(p.name)
   }
   return [...out]
+}
+
+/** Every `diagram("…")` source written as a single string literal, unescaped.
+ *
+ *  Deliberately narrow: a literal is matched only when it is the first
+ *  argument and closes cleanly. Anything else (concatenation, a variable, a
+ *  template with substitutions) is skipped rather than guessed at — a linter
+ *  that reports on a source it reconstructed wrongly is worse than one that
+ *  stays quiet and lets the runtime speak. */
+function diagramLiterals(code: string): string[] {
+  const out: string[] = []
+  const re = /diagram\s*\(\s*(['"`])/g
+  let m: RegExpExecArray | null
+  while ((m = re.exec(code)) !== null) {
+    const quote = m[1]
+    let i = re.lastIndex
+    let raw = ''
+    let closed = false
+    while (i < code.length) {
+      const ch = code[i]
+      if (ch === '\\') {
+        raw += code[i] + code[i + 1]
+        i += 2
+        continue
+      }
+      if (ch === quote) { closed = true; i++; break }
+      raw += ch
+      i++
+    }
+    if (!closed) continue
+    // Only a complete call — a concatenated source continues with `+`.
+    const after = code.slice(i).match(/^\s*([,)])/)
+    if (!after) continue
+    out.push(
+      raw
+        .replace(/\\n/g, '\n')
+        .replace(/\\t/g, '\t')
+        .replace(/\\(['"`\\])/g, '$1')
+    )
+  }
+  return out
 }
 
 export function lintSimScript(source: string): LintResult {
@@ -352,17 +403,30 @@ export function lintSimScript(source: string): LintResult {
   //
   // Legal names are the geometry properties every object has, plus the
   // params the target's own behaviors declare.
-  const GEOMETRY_PARAMS = ['x', 'y', 'width', 'height', 'rotation']
   const controlRe = /create\s*\(\s*['"](slider|button|trigger)['"]\s*,\s*\{([^}]*)\}/g
   while ((m = controlRe.exec(code)) !== null) {
     const [, control, propsRaw] = m
     const nameM = /targetParamName\s*:\s*['"]([^'"]+)['"]/.exec(propsRaw)
     if (!nameM) continue
     const param = nameM[1]
-    if (GEOMETRY_PARAMS.includes(param)) continue
     // Which object is it aimed at? Only a create() handle is checkable.
     const targetM = /target(?:ObjectId|Object|)\s*:\s*([A-Za-z_$][\w$]*)/.exec(propsRaw)
-    if (!targetM) continue
+
+    // NO target at all is the commonest form of this bug, and it used to slip
+    // through here: the rule below only checked whether a STATED target had
+    // the named param. A control with `targetParamName` and no
+    // `targetObjectId` falls back to a page variable that nothing reads, so it
+    // renders, drags, and drives nothing — the exact "sliders aren't attached
+    // to real components" failure, shipped silently.
+    if (!targetM) {
+      if (!/targetType\s*:\s*['"]variable['"]/.test(propsRaw)) {
+        errors.push(
+          `create("${control}", { targetParamName: "${param}" }) has no targetObjectId, so it drives nothing; aim it at a create() handle — create("${control}", { targetObjectId: <obj>, targetParamName: "${param}" }) — or set targetType: "variable" if it really drives a page variable`
+        )
+      }
+      continue
+    }
+    if (GEOMETRY_PARAMS.includes(param)) continue
     const targetKind = kinds[targetM[1]]
     if (!targetKind) continue
     const legal = paramsOf(targetKind)
@@ -462,7 +526,7 @@ export function lintSimScript(source: string): LintResult {
   // touches them. Omitting x/y stacks every body on the same origin pixel,
   // so they start interpenetrating and explode apart on the first frame.
   const placedNoPos: string[] = []
-  const createCallRe = /(?:var|let|const)?\s*([a-zA-Z_$][\w$]*)\s*=\s*create\s*\(\s*(['"])([^'"]+)\2\s*(?:,\s*(\{[^{}]*\}))?\s*\)/g
+  const createCallRe = new RegExp(CREATE_CALL_SOURCE, 'g')
   while ((cm = createCallRe.exec(code)) !== null) {
     const kind = cm[3].toLowerCase()
     if (!PLACED_KINDS.has(kind)) continue
@@ -556,6 +620,20 @@ export function lintSimScript(source: string): LintResult {
       'nothing in this scene supports the bodies — they fall off-canvas in about a second. ' +
         'Add create("ground", { x, y, width }) below them unless free fall is the point.'
     )
+  }
+
+  // 7. diagram() sources.
+  //
+  // A diagram is a whole language inside a string, so nothing above sees it:
+  // a mistyped edge or a stray line reads as a perfectly valid string literal
+  // and only fails when the script runs. Parse it here with the SAME parser
+  // the runtime uses, so a broken diagram is named before it is executed.
+  //
+  // Only a plain literal is checkable — a source built by concatenation or a
+  // variable is left to the runtime, which throws with the same message.
+  for (const src of diagramLiterals(code)) {
+    const ast = parseDiagram(src)
+    for (const e of ast.errors) errors.push(`diagram(): ${e}`)
   }
 
   if (/\bawait\b|\basync\b/.test(code)) warnings.push('SimScript is synchronous — async/await does nothing')

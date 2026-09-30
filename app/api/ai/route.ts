@@ -27,6 +27,25 @@ import { classifyIntent, type Intent } from '@/lib/ai/route-intent'
 import { generateEditPlan, EditFailedError } from '@/lib/ai/edit'
 import { explain, EXPLAIN_SYSTEM_PROMPT } from '@/lib/ai/explain'
 import { pickGenerator } from '@/lib/ai/generate'
+import { withCache } from '@/lib/ai/cache'
+
+/**
+ * The generator every lane runs through, memoized in Redis.
+ *
+ * Wrapping HERE rather than inside lib/ai/generate.ts keeps ioredis out of
+ * the pure lib chain — simscript-lint and explain are bundled for the browser
+ * and for the sweep scripts, and a server-only import in that graph breaks
+ * both. The wrapper is transparent, so every lane (script, explain, edit)
+ * picks up caching from this one place.
+ */
+const cachedGenerator = async (
+  lane: 'script' | 'explain',
+  model?: string,
+  bypass?: boolean
+) => {
+  const generator = await pickGenerator(lane, model)
+  return bypass && process.env.NODE_ENV !== 'production' ? generator : withCache(generator)
+}
 
 export const maxDuration = 300
 
@@ -57,6 +76,17 @@ const requestSchema = z.object({
   /** Override the router. The UI offers this as an explicit "explain" /
    *  "simulate" toggle for the cases where a question reads either way. */
   intent: z.enum(['simulate', 'explain', 'both', 'auto']).optional(),
+  /** Which local model to run, chosen in the panel. Ignored when no local
+   *  Ollama is reachable. Omitted = the configured per-lane default. */
+  model: z.string().max(120).optional(),
+  /** How many worked examples to retrieve for the SimScript lane. Omitted =
+   *  the measured default (lib/ai/few-shot.ts). Exists so scripts/ai-sweep.mjs
+   *  can measure the model-size / example-count trade rather than guess it. */
+  shots: z.number().int().min(0).max(12).optional(),
+  /** Bypass the generation cache. Development only — the sweep needs a real
+   *  generation per configuration, and a public cache-buster would just be a
+   *  way to make every request cost GPU. */
+  nocache: z.boolean().optional(),
   pageContext: z
     .object({
       variables: z.array(z.object({ name: z.string(), expr: z.string() })),
@@ -194,6 +224,7 @@ export async function POST(req: Request) {
       ? classifyIntent(parsed.data.prompt, hasContext, parsed.data.hasSelection ?? false)
       : parsed.data.intent
 
+  const scriptGenerator = () => cachedGenerator('script', parsed.data.model, parsed.data.nocache)
   const system = systemPrompt(parsed.data.pageContext, parsed.data.pageSurface)
   // Page state first, then conversation, then the request: the model reads
   // what the user is looking at before what they said about it.
@@ -216,7 +247,7 @@ export async function POST(req: Request) {
   const runExplain = async (onToken?: (c: string) => void) => {
     // The explain lane may run a different local model to the script lane —
     // prose and mathematics want a different model to SimScript codegen.
-    const generator = await pickGenerator('explain')
+    const generator = await cachedGenerator('explain', parsed.data.model, parsed.data.nocache)
     const result = await explain(userPrompt, {
       generator,
       onToken,
@@ -246,7 +277,7 @@ export async function POST(req: Request) {
           if (intent === 'edit') {
             // A plan is verified but NOT applied: the client previews it and
             // the user confirms. Nothing here can touch a page.
-            const generator = await pickGenerator('script')
+            const generator = await cachedGenerator('script', parsed.data.model, parsed.data.nocache)
             const doc = parsed.data.pageObjects
               ? {
                   objects: Object.fromEntries(
@@ -296,7 +327,13 @@ export async function POST(req: Request) {
             let script: string | undefined
             let sceneError: string | undefined
             try {
-              script = (await generateSimScript(userPrompt, { systemPrompt: system })).script
+              script = (
+                await generateSimScript(userPrompt, {
+                  systemPrompt: system,
+                  shots: parsed.data.shots,
+                  generator: await scriptGenerator(),
+                })
+              ).script
             } catch (e) {
               // A scene is the bonus here, not the deliverable. Losing it must
               // never cost the user a correct derivation — but say WHY it was
@@ -320,6 +357,8 @@ export async function POST(req: Request) {
 
           const result = await generateSimScript(userPrompt, {
             systemPrompt: system,
+            shots: parsed.data.shots,
+            generator: await scriptGenerator(),
             onToken: (chunk) => send('token', chunk),
           })
           send('done', {
@@ -360,7 +399,13 @@ export async function POST(req: Request) {
       let script: string | undefined
       let sceneError: string | undefined
       try {
-        script = (await generateSimScript(userPrompt, { systemPrompt: system })).script
+        script = (
+                await generateSimScript(userPrompt, {
+                  systemPrompt: system,
+                  shots: parsed.data.shots,
+                  generator: await scriptGenerator(),
+                })
+              ).script
       } catch (e) {
         // See the streaming path: the derivation is the deliverable, but a
         // silently-dropped scene is indistinguishable from "no scene exists".
@@ -378,7 +423,11 @@ export async function POST(req: Request) {
       } satisfies AiResponse)
     }
 
-    const result = await generateSimScript(userPrompt, { systemPrompt: system })
+    const result = await generateSimScript(userPrompt, {
+      systemPrompt: system,
+      shots: parsed.data.shots,
+      generator: await scriptGenerator(),
+    })
     return NextResponse.json({
       message:
         result.attempts > 1
