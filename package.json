@@ -23,7 +23,10 @@
     "eval:score": "node scripts/ai/eval/score-jsonl.mjs",
     "eval:quality": "node scripts/ai/quality/evaluate.mjs",
     "results": "node scripts/ai/eval/summarize-results.mjs",
-    "show:verifier": "node scripts/ai/show-verifier.mjs"
+    "show:verifier": "node scripts/ai/show-verifier.mjs",
+    "sketch:synth": "node --experimental-strip-types --import ./scripts/test/register.mjs scripts/ai/sketch/synth.mjs",
+    "sketch:preview": "node --experimental-strip-types --import ./scripts/test/register.mjs scripts/ai/sketch/preview.mjs",
+    "sketch:baseline": "node --experimental-strip-types --import ./scripts/test/register.mjs scripts/ai/sketch/eval-baseline.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",
