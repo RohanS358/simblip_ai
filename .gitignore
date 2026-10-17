@@ -10,3 +10,6 @@ __pycache__/
 .DS_Store
 *.traineddata
 !models/simblip-lite-lora/*.safetensors
+
+# sketch datasets (generated / collected; manifests are what we keep)
+/data/sketch/
