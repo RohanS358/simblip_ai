@@ -28,17 +28,19 @@ const noPage = () => fail('No page is open. Open a notebook page first.')
 /** viewportBounds() divides by a measured canvas; with no canvas on screen
  *  (a headless MCP call, a page not yet mounted) it can return a NaN edge, and
  *  a NaN position serialises to null — an object nobody can ever find. */
-function safeBounds(pageId: string) {
+export function safeBounds(pageId: string) {
   const b = viewportBounds(pageId)
   return [b.left, b.top, b.right, b.bottom].every(Number.isFinite) ? b : { left: 0, top: 0, right: 1200, bottom: 800 }
 }
 
 /** Run verified SimScript onto the page, placed by geometry (never by the
  *  script's own guess) — identical to the panel's Add button. */
-function place(pageId: string, script: string) {
+/** `reserveBottom`: canvas px kept clear along the bottom — a lesson's captions and prediction card cover it. */
+export function place(pageId: string, script: string, opts: { reserveBottom?: number } = {}) {
   // One discrete undo step for the whole scene, however recently the user last edited.
   useDocStore.getState().pushHistory(pageId, true)
-  const bounds = safeBounds(pageId)
+  const full = safeBounds(pageId)
+  const bounds = opts.reserveBottom ? { ...full, bottom: Math.max(full.top + 200, full.bottom - opts.reserveBottom) } : full
   const origin = placeAnswerAndScene(null, true, bounds).scene ?? { x: bounds.left + 40, y: bounds.top + 40 }
   const kind = findPageMeta(useWorkspaceStore.getState().nodes, pageId)?.pageKind
   const before = Object.keys(useDocStore.getState().pages[pageId]?.objects ?? {}).length
