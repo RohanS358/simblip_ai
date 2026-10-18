@@ -76,6 +76,74 @@ Format: date · decision · evidence · what would change it.
 - **Open:** the generator's realism is unverified against real strokes. Look at
   the contact sheet; weight real data heavily as soon as any exists.
 
+## 2026-10-18 — Sketch Phase S2: SketchNet v1
+
+- **Model:** 116,570 parameters — four Conv-BN-ReLU-Pool blocks on a 2×32×32 image
+  (whole drawing + lead-stripped body), a 64-unit GRU on 64 resampled stroke
+  points (x, y, penUp, turn), a 128-unit class head (21 classes + `unknown`) and a
+  4-way pose head. Label smoothing 0.05, pose loss 0.5, AdamW + one-cycle, 30
+  epochs (~2.5 min on the RTX 4060). Class temperature fitted on the VALIDATION
+  split and folded into the class head, so `softmax(logits)` is calibrated.
+- **Preprocessing exists once, in TypeScript** (`lib/sketch/preprocess.ts`). The
+  exporter runs it over the shards and Python only reads the resulting tensors —
+  no Python port of `normalizeStrokes`/`stripLeads` to drift. Images are stored
+  and used in whole 1/255 steps so browser and training agree exactly.
+- **No ONNX Runtime in the browser** (deviation from plan §6.4). The network is
+  small enough for a ~150-line hand-written forward pass, which avoids a ~10 MB
+  WASM binary and a worker. The `.onnx` is still exported and checked against
+  PyTorch (max logit difference 1.1e-5); the TypeScript pass is checked against
+  the same PyTorch logits (golden vectors, max difference 3.5e-6 in Chrome).
+- **No int8 quantisation:** the whole model is 465 KB as float32 (plan budget:
+  ≤ 1.5 MB int8), and ORT-web's dynamic quantisation does not cover Conv/GRU. Ship
+  float32.
+- **Where things are:** `public/models/sketchnet-v1.{json,bin,onnx}`, golden
+  vectors in `lib/sketch/golden/`, report in `docs/ai/reports/sketchnet-v1.json`.
+  Checkpoints stay on D: (`D:\simblip-ml\runs`).
+- **Evidence (SYNTHETIC ONLY):** on 31,050 samples from 75 synthetic writers the
+  model never saw: top-1 98.82 %, top-3 99.95 %, ECE 0.0024 (0.0446 before
+  calibration), pose 99.45 %, `unknown` precision 97.9 % / recall 97.6 %. The
+  existing CART baseline scores 55.3 % on the same data. Weakest: battery
+  (92.7 %) vs capacitor (95.0 %), `unknown` vs switch/resistor/inductor. A fresh
+  seed (777) gives 99.3 %. **These say how well the model learned the generator's
+  world. They are not a real-world accuracy, and no real-world accuracy exists.**
+  The manifest records `evidence.real = null`.
+- **Latency:** ~8–9 ms per symbol warm (preprocess 0.3 ms + forward), measured in
+  Node and in Chrome on the dev laptop. The plan's 5 ms per-symbol target is
+  MISSED by ~1.7×; the user-facing budget (< 150 ms after pen-up) is met by more
+  than 10×, and recognition runs once per pen-hold, not per frame. Convolution
+  is ~75 % of the time. If a mid-range device proves too slow: narrower channels
+  (retrain) or a WASM-SIMD kernel.
+- **Integration:** pen setting "Neural symbol recogniser (experimental)", OFF by
+  default. On, a held symbol is named by SketchNet when it is not `unknown`, its
+  confidence is ≥ 0.9 and the class maps to a component; otherwise the older
+  template matcher decides exactly as before. Pose becomes the component's
+  rotation. Off = behaviour unchanged. Not yet verified by drawing in the app.
+- **Open:** the 55.3 % → 98.8 % jump is partly a sign the synthetic world is
+  easy for a CNN. Real data is the test that matters; until then the setting
+  stays off by default.
+
+## 2026-10-18 — SketchNet v1 retrained after a real-use failure (bare symbols)
+
+- **What happened:** Rohan enabled the setting, drew a resistor/diode and held the
+  pen: nothing happened. A clean zigzag with leads I drove through the app myself
+  DID convert, so the hook works. The generator (v1) almost never drew symbols
+  without connecting leads, which is how people usually sketch a part. Measured:
+  top-1 99.2 % with leads, **81.9 % without** (battery 21/40, switch 19/40, AND
+  gate 40/40 wrong), and only 70.6 % of bare symbols cleared the 0.9 gate.
+- **Fix:** generator v2 — each simulated writer has a `leadless` propensity
+  (0–0.7) and draws the whole symbol bare with that probability. Retrained from
+  scratch (same architecture, same recipe). Bare symbols now: top-1 97.9 %, 95.0 %
+  both correct and ≥ 0.9. Standard synthetic test (75 unseen synthetic writers):
+  top-1 98.32 %, top-3 99.93 %, ECE 0.0034. Slightly lower than before because
+  the data is harder, not worse.
+- **Declines are now visible:** when the setting is on and a hold is not
+  accepted, a toast says why ("not sure enough (resistor 74 %, needs 90 %)" or
+  "doesn't look like a known symbol"; or "still loading"). Silence looked broken
+  and hid the evidence.
+- **Lesson:** a high synthetic score hid a distribution gap that one honest use
+  exposed. The remaining gaps are unknown until real strokes exist.
+  Treat toasts reporting low confidence on real drawings as the first real data.
+
 - 2026-10-18 · Learning engine (Phase 3) is model-free: FSRS-4.5 hand-rolled in `lib/learning/fsrs.ts` (no `ts-fsrs` dependency), hint ladder / mastery / card lint are deterministic code; the model only words content. · 10 tests in `lib/learning/learning.test.mjs` (intervals grow, Easy>Good>Hard, R=0.9 at one stability). · Swap to `ts-fsrs` if the parameters need per-user optimisation.
 - 2026-10-18 · Retrieval is BM25 over lesson sections (`lib/learning/bm25.ts`), no embedding model; only the 3 best lessons by title are downloaded per query (`lib/tools/course-corpus.ts`). · 0 MB model RAM, honours course grants because it reads `/api/courses`. · Add embeddings only if BM25 recall measures insufficient.
 - 2026-10-18 · Learner state lives in its own persisted store `simblip-learner`, never in the chat store, and never leaves the device unless page-sync is on. · Plan D9 (minors' data). · A teacher view needs an explicit class-consent flow first (Phase 6).

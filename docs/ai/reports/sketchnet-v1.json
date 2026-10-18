@@ -1,0 +1,61 @@
+{
+  "temperature": 0.6290539503097534,
+  "epochs": 30,
+  "best_val_top1": 0.9845,
+  "parameters": 116570,
+  "results": {
+    "synthetic": {
+      "n": 31050,
+      "top1": 0.9832,
+      "top3": 0.9993,
+      "ece": 0.0034,
+      "pose_acc": 0.9896,
+      "unknown_precision": 0.9602,
+      "unknown_recall": 0.9378,
+      "per_class_recall": {
+        "battery": 0.9444,
+        "resistor": 0.9896,
+        "capacitor": 0.9548,
+        "inductor": 0.9815,
+        "switch": 0.9637,
+        "bulb": 1.0,
+        "led": 0.9985,
+        "diode": 0.9911,
+        "gnd": 0.9941,
+        "ac-source": 0.9933,
+        "voltmeter": 0.9889,
+        "ammeter": 0.9948,
+        "and-gate": 0.9926,
+        "or-gate": 0.9867,
+        "xor-gate": 0.9956,
+        "nand-gate": 0.9956,
+        "nor-gate": 0.9844,
+        "not-gate": 0.9933,
+        "bjt": 0.9993,
+        "mosfet": 1.0,
+        "opamp": 0.9963,
+        "unknown": 0.9378
+      },
+      "by_device_top1": {
+        "mouse": 0.9836,
+        "touchpad": 0.9763,
+        "finger": 0.9872,
+        "pen": 0.9928
+      },
+      "top_confusions": {
+        "unknown -> switch": 91,
+        "battery -> capacitor": 65,
+        "capacitor -> battery": 58,
+        "switch -> unknown": 49,
+        "unknown -> and-gate": 27,
+        "unknown -> inductor": 25,
+        "unknown -> resistor": 18,
+        "inductor -> unknown": 18,
+        "and-gate -> unknown": 9,
+        "voltmeter -> ac-source": 9
+      },
+      "ece_uncalibrated": 0.0496
+    },
+    "real": null
+  }
+}
