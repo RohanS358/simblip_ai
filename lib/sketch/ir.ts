@@ -15,6 +15,8 @@ const Node = z.object({
   alt: z.array(z.object({ cls: z.string(), conf: z.number() })).max(3).optional(),
   bbox: z.tuple([z.number(), z.number(), z.number(), z.number()]),
   rot: Rot,
+  /** Mechanics/optics: the part's turn in degrees, any value (a 30° ramp is not a multiple of 90). Screen frame, y down. */
+  angle: z.number().optional(),
   flip: z.boolean().optional(),
   values: z.record(z.string(), z.string()).optional(),
   source: z.enum(['ink', 'photo']),
