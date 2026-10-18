@@ -167,6 +167,38 @@ Format: date · decision · evidence · what would change it.
   grouping and the ghost-preview confirm step are Phase S3. Cases the user draws
   as one long stroke through several parts (a whole loop) are still not split.
 
+## 2026-10-18 — Phase S3, first slice: ghost preview, confirm / correct, local corrections
+
+- **Behaviour (agreed with Rohan):** with the experimental neural setting ON, a
+  held symbol no longer replaces the ink. The ink stays and a **ghost preview**
+  is drawn over it: the recognised part translucent, a dashed outline, a
+  confidence dot (green ≥ 0.9, amber 0.6–0.9, red below; blue once the user has
+  chosen), and a control chip — **Make it live**, rotate 90°, keep as ink (Esc),
+  the model's own first guess and runners-up (≥ 3 %), and an **Other…** list of
+  all 21 classes. Enter confirms. Setting OFF = the existing instant convert,
+  unchanged (all neural code is gated on it; a ghost also bypasses the template
+  matcher so the two cannot both fire).
+- **Shown from p ≥ 0.15** (`NEURAL_SHOW_P`), not 0.45: a plausible wrong guess is
+  where a correction teaches most. Weaker than that falls back to the older
+  matcher with a toast.
+- **Make it live** replaces the held stroke + any grouped strokes with the part in
+  one history step (verified: Ctrl+Z restores all four strokes). Dismiss keeps the
+  ink and records nothing.
+- **Local corrections (`lib/sketch/corrections.ts`):** confirming or correcting
+  saves {strokes, chosen class, pose, device, what the model predicted and how
+  sure, changed?, rotated?} as a `source: "real"` sample in `localStorage`
+  (capped at 400, newest kept). Writer id is a random on-device code. **Nothing is
+  uploaded.** Strokes are thinned to ≤ 64 points; timestamps are placeholders
+  (the canvas keeps none) and marked so.
+- **Getting it to the pipeline:** Pen settings → *Saved corrections* → Export
+  (.jsonl) → `npm run sketch:import-real -- --in <file> --out data/sketch/real`
+  (starts as held-out TEST data, since one person is one writer) →
+  `npm run sketch:eval-real` scores the shipped model on those strokes — the first
+  real-world number, flagged as a smoke test from few writers.
+- **Not done in this slice:** time/space stroke grouping learned from data, wire
+  and junction extraction, value (digits/units) recognition, the S3 exit
+  evaluation on whole circuits.
+
 - 2026-10-18 · Learning engine (Phase 3) is model-free: FSRS-4.5 hand-rolled in `lib/learning/fsrs.ts` (no `ts-fsrs` dependency), hint ladder / mastery / card lint are deterministic code; the model only words content. · 10 tests in `lib/learning/learning.test.mjs` (intervals grow, Easy>Good>Hard, R=0.9 at one stability). · Swap to `ts-fsrs` if the parameters need per-user optimisation.
 - 2026-10-18 · Retrieval is BM25 over lesson sections (`lib/learning/bm25.ts`), no embedding model; only the 3 best lessons by title are downloaded per query (`lib/tools/course-corpus.ts`). · 0 MB model RAM, honours course grants because it reads `/api/courses`. · Add embeddings only if BM25 recall measures insufficient.
 - 2026-10-18 · Learner state lives in its own persisted store `simblip-learner`, never in the chat store, and never leaves the device unless page-sync is on. · Plan D9 (minors' data). · A teacher view needs an explicit class-consent flow first (Phase 6).
