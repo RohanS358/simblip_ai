@@ -122,6 +122,28 @@ Format: date · decision · evidence · what would change it.
   easy for a CNN. Real data is the test that matters; until then the setting
   stays off by default.
 
+## 2026-10-18 — SketchNet v1 retrained after a real-use failure (bare symbols)
+
+- **What happened:** Rohan enabled the setting, drew a resistor/diode and held the
+  pen: nothing happened. A clean zigzag with leads I drove through the app myself
+  DID convert, so the hook works. The generator (v1) almost never drew symbols
+  without connecting leads, which is how people usually sketch a part. Measured:
+  top-1 99.2 % with leads, **81.9 % without** (battery 21/40, switch 19/40, AND
+  gate 40/40 wrong), and only 70.6 % of bare symbols cleared the 0.9 gate.
+- **Fix:** generator v2 — each simulated writer has a `leadless` propensity
+  (0–0.7) and draws the whole symbol bare with that probability. Retrained from
+  scratch (same architecture, same recipe). Bare symbols now: top-1 97.9 %, 95.0 %
+  both correct and ≥ 0.9. Standard synthetic test (75 unseen synthetic writers):
+  top-1 98.32 %, top-3 99.93 %, ECE 0.0034. Slightly lower than before because
+  the data is harder, not worse.
+- **Declines are now visible:** when the setting is on and a hold is not
+  accepted, a toast says why ("not sure enough (resistor 74 %, needs 90 %)" or
+  "doesn't look like a known symbol"; or "still loading"). Silence looked broken
+  and hid the evidence.
+- **Lesson:** a high synthetic score hid a distribution gap that one honest use
+  exposed. The remaining gaps are unknown until real strokes exist.
+  Treat toasts reporting low confidence on real drawings as the first real data.
+
 - 2026-10-18 · Learning engine (Phase 3) is model-free: FSRS-4.5 hand-rolled in `lib/learning/fsrs.ts` (no `ts-fsrs` dependency), hint ladder / mastery / card lint are deterministic code; the model only words content. · 10 tests in `lib/learning/learning.test.mjs` (intervals grow, Easy>Good>Hard, R=0.9 at one stability). · Swap to `ts-fsrs` if the parameters need per-user optimisation.
 - 2026-10-18 · Retrieval is BM25 over lesson sections (`lib/learning/bm25.ts`), no embedding model; only the 3 best lessons by title are downloaded per query (`lib/tools/course-corpus.ts`). · 0 MB model RAM, honours course grants because it reads `/api/courses`. · Add embeddings only if BM25 recall measures insufficient.
 - 2026-10-18 · Learner state lives in its own persisted store `simblip-learner`, never in the chat store, and never leaves the device unless page-sync is on. · Plan D9 (minors' data). · A teacher view needs an explicit class-consent flow first (Phase 6).
