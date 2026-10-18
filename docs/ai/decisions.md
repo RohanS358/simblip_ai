@@ -144,6 +144,29 @@ Format: date · decision · evidence · what would change it.
   exposed. The remaining gaps are unknown until real strokes exist.
   Treat toasts reporting low confidence on real drawings as the first real data.
 
+## 2026-10-18 — Held-symbol rules: intent-based bar, multi-stroke grouping
+
+- **Evidence from real strokes** (the first, from Rohan's own notebook): a
+  mouse-drawn resistor stroke scored resistor 0.59 / unknown 0.34 — correct, but
+  under the 0.9 bar picked from synthetic calibration. Handwriting strokes on the
+  same page scored unknown 0.9+, correctly. Conclusion: synthetic calibration
+  does not transfer; the right class is usually ranked but at lower confidence.
+- **Rule change (`lib/sketch/neural-pick.ts`):** holding the pen is intent, so the
+  question is which symbol, not whether to convert. Accept the best non-`unknown`
+  class when its probability ≥ 0.45 (a guess from ONE real data point — revisit
+  with real data). The result is always announced in a toast, with its
+  percentage, so a wrong guess is obvious.
+- **Multi-stroke symbols:** a hold only carries the last stroke, but a battery,
+  capacitor or gate is several. Plain ink drawn within 6 s and within 30 px of the
+  held stroke (chained, ≤ 7 strokes) is tried as one drawing; the group replaces
+  the lone stroke only if its best symbol is ≥ 0.45 and beats the lone stroke by
+  > 0.1 (or the lone stroke is below the bar). The absorbed strokes are removed
+  in one history step. Verified in the app: four hand-jittered strokes (two
+  leads + two plates) became a battery.
+- **Open:** grouping is by recency and proximity only; the full time/space
+  grouping and the ghost-preview confirm step are Phase S3. Cases the user draws
+  as one long stroke through several parts (a whole loop) are still not split.
+
 - 2026-10-18 · Learning engine (Phase 3) is model-free: FSRS-4.5 hand-rolled in `lib/learning/fsrs.ts` (no `ts-fsrs` dependency), hint ladder / mastery / card lint are deterministic code; the model only words content. · 10 tests in `lib/learning/learning.test.mjs` (intervals grow, Easy>Good>Hard, R=0.9 at one stability). · Swap to `ts-fsrs` if the parameters need per-user optimisation.
 - 2026-10-18 · Retrieval is BM25 over lesson sections (`lib/learning/bm25.ts`), no embedding model; only the 3 best lessons by title are downloaded per query (`lib/tools/course-corpus.ts`). · 0 MB model RAM, honours course grants because it reads `/api/courses`. · Add embeddings only if BM25 recall measures insufficient.
 - 2026-10-18 · Learner state lives in its own persisted store `simblip-learner`, never in the chat store, and never leaves the device unless page-sync is on. · Plan D9 (minors' data). · A teacher view needs an explicit class-consent flow first (Phase 6).
