@@ -199,6 +199,20 @@ Format: date · decision · evidence · what would change it.
   and junction extraction, value (digits/units) recognition, the S3 exit
   evaluation on whole circuits.
 
+## 2026-10-19 — Phase S3 completed (on generated data) and verified end to end
+
+- **Reader** `lib/sketch/extract.ts`; **preview + Make it live** `components/workspace/circuit-ghost.tsx`,
+  `lib/sketch/circuit-ghost.ts`; entry is the existing *Recognize components* action when the experimental pen
+  setting is on (falls back to the older converter if nothing is recognised).
+- **Values** read by `inkchars-v1` (a second SketchNet-shaped model, 465 KB), loaded lazily; without it values are
+  typed in the preview. The first train silently broke the ohm sign (Python read UTF-8 as cp1252) — fixed in
+  train/export scripts and covered by a test on the label set.
+- **Stray-part pruning:** a part nothing is wired to is dropped (usually a label that read as a symbol). Cost: a
+  little recall on text-free sketches (parts found 96.7 → 95.5 %).
+- **Honest numbers (synthetic):** 71 % exact without labels, 31 % with labels drawn; see docs/ai/s3-progress.md.
+- **Test infrastructure:** tests that spawn `npx esbuild` now use `scripts/test/exec.mjs` and file URLs, so the
+  whole suite runs on Windows.
+
 - 2026-10-18 · Learning engine (Phase 3) is model-free: FSRS-4.5 hand-rolled in `lib/learning/fsrs.ts` (no `ts-fsrs` dependency), hint ladder / mastery / card lint are deterministic code; the model only words content. · 10 tests in `lib/learning/learning.test.mjs` (intervals grow, Easy>Good>Hard, R=0.9 at one stability). · Swap to `ts-fsrs` if the parameters need per-user optimisation.
 - 2026-10-18 · Retrieval is BM25 over lesson sections (`lib/learning/bm25.ts`), no embedding model; only the 3 best lessons by title are downloaded per query (`lib/tools/course-corpus.ts`). · 0 MB model RAM, honours course grants because it reads `/api/courses`. · Add embeddings only if BM25 recall measures insufficient.
 - 2026-10-18 · Learner state lives in its own persisted store `simblip-learner`, never in the chat store, and never leaves the device unless page-sync is on. · Plan D9 (minors' data). · A teacher view needs an explicit class-consent flow first (Phase 6).

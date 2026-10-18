@@ -33,7 +33,8 @@
     "sketch:layouts": "node --experimental-strip-types --import ./scripts/test/register.mjs scripts/ai/sketch/make-layouts.mjs",
     "sketch:preview-scenes": "node --experimental-strip-types --import ./scripts/test/register.mjs scripts/ai/sketch/preview-scenes.mjs",
     "sketch:eval-scenes": "node --experimental-strip-types --import ./scripts/test/register.mjs scripts/ai/sketch/eval-scenes.mjs",
-    "sketch:debug-scenes": "node --experimental-strip-types --import ./scripts/test/register.mjs scripts/ai/sketch/debug-scenes.mjs"
+    "sketch:debug-scenes": "node --experimental-strip-types --import ./scripts/test/register.mjs scripts/ai/sketch/debug-scenes.mjs",
+    "sketch:synth-chars": "node --experimental-strip-types --import ./scripts/test/register.mjs scripts/ai/sketch/synth-chars.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",
