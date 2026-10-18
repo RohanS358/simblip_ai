@@ -33,11 +33,11 @@ export const FRAME = { w: 100, h: 60 }
 
 // ── primitives ─────────────────────────────────────────────────────────────
 
-const line = (x0: number, y0: number, x1: number, y1: number): Pt[] => [[x0, y0], [x1, y1]]
-const lead = (x0: number, y0: number, x1: number, y1: number): GlyphStroke => ({ pts: line(x0, y0, x1, y1), lead: true })
-const body = (pts: Pt[]): GlyphStroke => ({ pts })
+export const line = (x0: number, y0: number, x1: number, y1: number): Pt[] => [[x0, y0], [x1, y1]]
+export const lead = (x0: number, y0: number, x1: number, y1: number): GlyphStroke => ({ pts: line(x0, y0, x1, y1), lead: true })
+export const body = (pts: Pt[]): GlyphStroke => ({ pts })
 
-function arc(cx: number, cy: number, rx: number, ry: number, a0: number, a1: number, n = 18): Pt[] {
+export function arc(cx: number, cy: number, rx: number, ry: number, a0: number, a1: number, n = 18): Pt[] {
   const out: Pt[] = []
   for (let i = 0; i <= n; i++) {
     const a = a0 + ((a1 - a0) * i) / n
@@ -46,9 +46,9 @@ function arc(cx: number, cy: number, rx: number, ry: number, a0: number, a1: num
   return out
 }
 
-const circle = (cx: number, cy: number, r: number): Pt[] => arc(cx, cy, r, r, -Math.PI / 2, (3 * Math.PI) / 2, 28)
+export const circle = (cx: number, cy: number, r: number): Pt[] => arc(cx, cy, r, r, -Math.PI / 2, (3 * Math.PI) / 2, 28)
 
-function quad(p0: Pt, c: Pt, p1: Pt, n = 14): Pt[] {
+export function quad(p0: Pt, c: Pt, p1: Pt, n = 14): Pt[] {
   const out: Pt[] = []
   for (let i = 0; i <= n; i++) {
     const t = i / n
@@ -354,4 +354,44 @@ export const GLYPHS: Record<Wave1Class, (rng: Rng) => Glyph> = {
   bjt,
   mosfet,
   opamp,
+}
+
+// ── where the wires go ─────────────────────────────────────────────────────
+// Pin positions in the same 100 × 60 frame, at pose 0, for a typical drawing of
+// each class. Names are SimScript anchors (what the IR and compiler use).
+// lib/sketch/pins.ts turns these into bounding-box fractions — calibrated against
+// real glyph output by scripts/ai/sketch/calibrate-pins.mjs — which is what the
+// wire matcher actually uses; this table is the single source they derive from.
+
+export interface FramePin {
+  name: string
+  x: number
+  y: number
+}
+
+const two = (a: string, b: string): FramePin[] => [{ name: a, x: 0, y: MID }, { name: b, x: 100, y: MID }]
+
+export const PIN_FRAME: Record<Wave1Class, FramePin[]> = {
+  battery: two('positive', 'negative'), // pose 0: the long (positive) plate is on the left
+  resistor: two('a', 'b'),
+  capacitor: two('a', 'b'),
+  inductor: two('a', 'b'),
+  switch: two('a', 'b'),
+  bulb: two('a', 'b'),
+  led: two('anode', 'cathode'),
+  diode: two('anode', 'cathode'),
+  gnd: [{ name: 'terminal', x: 50, y: 0 }],
+  'ac-source': two('positive', 'negative'),
+  voltmeter: two('a', 'b'),
+  ammeter: two('a', 'b'),
+  'and-gate': [{ name: 'input1', x: 0, y: 20 }, { name: 'input2', x: 0, y: 40 }, { name: 'output', x: 100, y: MID }],
+  'or-gate': [{ name: 'input1', x: 0, y: 20 }, { name: 'input2', x: 0, y: 40 }, { name: 'output', x: 100, y: MID }],
+  'xor-gate': [{ name: 'input1', x: 0, y: 20 }, { name: 'input2', x: 0, y: 40 }, { name: 'output', x: 100, y: MID }],
+  'nand-gate': [{ name: 'input1', x: 0, y: 20 }, { name: 'input2', x: 0, y: 40 }, { name: 'output', x: 100, y: MID }],
+  'nor-gate': [{ name: 'input1', x: 0, y: 20 }, { name: 'input2', x: 0, y: 40 }, { name: 'output', x: 100, y: MID }],
+  'not-gate': [{ name: 'input', x: 0, y: MID }, { name: 'output', x: 100, y: MID }],
+  bjt: [{ name: 'base', x: 0, y: MID }, { name: 'collector', x: 63, y: 0 }, { name: 'emitter', x: 63, y: 60 }],
+  mosfet: [{ name: 'gate', x: 0, y: 38 }, { name: 'drain', x: 62, y: 0 }, { name: 'source', x: 62, y: 60 }],
+  // minus-on-top is the common drawing; plus-on-top is the 30 % variant (see opamp()).
+  opamp: [{ name: 'in-', x: 0, y: 18 }, { name: 'in+', x: 0, y: 42 }, { name: 'out', x: 100, y: MID }],
 }
