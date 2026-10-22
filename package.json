@@ -36,7 +36,8 @@
     "sketch:debug-scenes": "node --experimental-strip-types --import ./scripts/test/register.mjs scripts/ai/sketch/debug-scenes.mjs",
     "sketch:synth-chars": "node --experimental-strip-types --import ./scripts/test/register.mjs scripts/ai/sketch/synth-chars.mjs",
     "sketch:eval-mech": "node --experimental-strip-types --import ./scripts/test/register.mjs scripts/ai/sketch/eval-mech.mjs",
-    "sketch:eval-optics": "node --experimental-strip-types --import ./scripts/test/register.mjs scripts/ai/sketch/eval-optics.mjs"
+    "sketch:eval-optics": "node --experimental-strip-types --import ./scripts/test/register.mjs scripts/ai/sketch/eval-optics.mjs",
+    "sketch:eval-photo": "node --experimental-strip-types --import ./scripts/test/register.mjs scripts/ai/sketch/eval-photo.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",

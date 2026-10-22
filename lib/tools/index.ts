@@ -5,6 +5,7 @@
 
 import './scene'
 import './pages'
+import './sketch'
 import './learn'
 import './course-corpus'
 import './teacher'
