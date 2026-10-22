@@ -5,6 +5,7 @@
 
 import { create } from 'zustand'
 import type { Beat, Storyboard } from './storyboard'
+import type { Section } from './sections'
 
 export type PredictBeat = Extract<Beat, { t: 'predict' }>
 
@@ -21,6 +22,10 @@ interface LessonState {
   /** A prediction waiting for the student. */
   pending: PredictBeat | null
   chosen: number | null
+  /** The board's sections, in the order they were opened. Kept for the whole film. */
+  sections: Section[]
+  /** The study-notes (print) view is open. */
+  notesOpen: boolean
   /** A film being generated: what the director is doing now. */
   preparing: { topic: string; message: string } | null
   set: (p: Partial<Omit<LessonState, 'set'>>) => void
@@ -37,6 +42,8 @@ export const useLesson = create<LessonState>((set) => ({
   card: null,
   pending: null,
   chosen: null,
+  sections: [],
+  notesOpen: false,
   preparing: null,
   set: (p) => set(p),
 }))
