@@ -94,10 +94,34 @@ async function downscale(file: File): Promise<Blob> {
   }
 }
 
+/** A real browser page: it has an origin that can serve /vendor/tesseract and a canvas. */
+const inBrowser = () => typeof window !== 'undefined' && typeof document !== 'undefined' && typeof location !== 'undefined'
+
+type Recognize = (
+  image: File | string,
+  langs: string,
+  options: { logger: (m: { status?: string; progress?: number }) => void }
+) => Promise<{ data: { text?: string } }>
+
+/** The library's own defaults (CDN assets, one-shot worker). Used only where the
+ *  self-hosted path cannot run — see readPhoto. */
+async function readPhotoDefault(file: File, progress?: (status: string, p: number) => void): Promise<string> {
+  // tesseract.js is CommonJS: depending on the bundler's interop the named export can
+  // come back undefined and only `default` carries the API.
+  const mod = (await import('tesseract.js')) as unknown as { recognize?: Recognize; default?: { recognize?: Recognize } }
+  const recognize = mod.recognize ?? mod.default?.recognize
+  if (!recognize) throw new Error('the OCR library failed to load')
+  const { data } = await recognize(file, 'eng', { logger: (m) => m.status && progress?.(m.status, m.progress ?? 0) })
+  return (data.text ?? '').replace(/\s+\n/g, '\n').trim()
+}
+
 /** Read the text in a photo. Throws on failure; the caller words it for the
  *  student. `progress` reports tesseract's own phases ("loading language
  *  traineddata", "recognizing text"). */
 export async function readPhoto(file: File, progress?: (status: string, p: number) => void): Promise<string> {
+  // Outside a browser (Node tests, scripts, a server) there is no origin serving our
+  // copy of the reader's files and no canvas: use tesseract.js's own defaults.
+  if (!inBrowser()) return readPhotoDefault(file, progress)
   clearTimeout(idle)
   onStatus = progress
   try {
