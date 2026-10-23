@@ -182,6 +182,11 @@ const MATHY_RE = /[=^]|\b(?:sin|sine|cos|cosine|tan|log|ln|sqrt|exp|derivative|i
 const CANVAS_OR_DOC_RE =
   /\b(?:simulat\w*|animat\w*|plot\w*|graph\w*|draw\w*|diagram|chart|scene|canvas|slides?|deck|presentation|notes?|summar\w*|report|essay|truth table|waveform)\b/i
 
+/** Things people ask an assistant to WRITE. "Make me a study plan" opens with a
+ *  build verb but wants words, not a scene. */
+const WRITING_NOUN_RE =
+  /\b(?:plan|poem|story|email|letter|schedule|outline|speech|joke|message|caption|title|idea|ideas|recipe|list|paragraph|cover letter|resume|bio)\b/i
+
 /**
  * Is this just a conversation? True when the prompt has no technical
  * vocabulary, no maths, and does not ask for a scene, a diagram or a document.
@@ -258,8 +263,10 @@ export function classifyIntent(prompt: string, hasContext = false, selected = fa
   // their page and asking for it to change, which neither a fresh scene nor a
   // derivation answers. Gated on context so this can never fire by accident.
   if (wantsEdit(p, hasContext, selected)) return 'edit'
-  // Ordinary conversation is answered, never built.
-  if (isGeneralConversation(p)) return 'explain'
+  // Ordinary conversation is answered, never built. The one carve-out: with a
+  // page open, a bare build verb ("make the bob heavier") is a command about
+  // that page, so it keeps its old route unless it names something to WRITE.
+  if (isGeneralConversation(p) && !(hasContext && BUILD_ONLY_RE.test(p) && !WRITING_NOUN_RE.test(p))) return 'explain'
   // A slide deck is written output, so it counts as a written artefact even
   // though "make me slides..." opens with a build verb. Same for "make me
   // notes/a summary on X" — but NOT "add a note" (a canvas object), which is
