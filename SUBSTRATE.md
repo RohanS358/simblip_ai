@@ -2,7 +2,7 @@
 
 
 The AI layer is not a standalone program: its tools drive a simulator. To make this repository **run and test headlessly** (no browser, no Next.js app),
-the files the AI code imports from the main SIMBLIP repository are vendored here, unmodified, as one commit (`chore/simulator-substrate`).
+the files the AI code imports from the main SIMBLIP repository are vendored here as one commit (`chore/simulator-substrate`).
 
 **Rule of thumb:** `lib/ai`, `lib/lesson`, `lib/tools`, `lib/learning`, `lib/teacher`, `lib/tts`, `lib/frame`, `lib/sketch`, `ai-server`, `scripts/ai`, `scripts/mcp`, `Modelfile`, `app/api/ai`
 are the AI system. Everything listed below is the host simulator they run against.
@@ -38,6 +38,12 @@ if a file were absent the 557-test suite would not load.
 | `types` | 1 | misc support |
 
 Plus `content/courses/` (125 authored lessons and 22 course manifests, as JSON, read by the lesson tests and the Lesson Player), `public/100_Questions_All_Subjects.md` (routing test corpus), `scripts/test/` (the ESM alias loader / bundler the tests use), `tsconfig.json`, and `types/poly-decomp.d.ts`.
+
+## The one deliberate change
+
+`lib/auth/bootstrap.ts` seeds a local-mode operator account in the main repository. Its email and password are **redacted** here
+(`operator@example.invalid` / `redacted-local-demo-password`) so no credential is published. Nothing in the AI layer or the tests reads them.
+Every other vendored file is byte-for-byte the main repository's.
 
 ## Changing it
 
