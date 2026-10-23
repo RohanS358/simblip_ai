@@ -271,6 +271,9 @@ export async function runAi(req: AiRequest, deps: RunDeps): Promise<void> {
 
     if (intent === 'explain') {
       const result = await runExplain(tok)
+      // A model that returns nothing is a failure to report, not an "answer":
+      // it used to surface as an empty reply under a red status line.
+      if (!result.markdown.trim()) return done({ message: 'The model returned an empty answer. Try again, or rephrase the question.' })
       return done({
         message: 'Answered — review it, then add it to your notebook.',
         answer: result.markdown,
