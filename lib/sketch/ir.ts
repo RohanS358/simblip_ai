@@ -1,61 +1,62 @@
-// Scene IR — the contract every sketch-recognition stage emits (AI plan 2,
-// Appendix A). Stages only ADD or REFINE fields; compile.ts turns an IR into
-// SimScript with no model in the loop, so a wrong IR can never produce a
-// broken scene — only a clearly-reported compile error.
+// Scene IR — the contract between every sketch-recognition stage and the
+// compiler (docs: SIMBLIP AI Plan, Document 2, §3.2 and Appendix A).
+//
+// Stages may only add or refine these fields; nothing upstream of the compiler
+// invents canvas objects. A better recogniser tomorrow changes nothing
+// downstream, and a human can write ground truth by hand.
+
 import { z } from 'zod'
 
 const Rot = z.union([z.literal(0), z.literal(90), z.literal(180), z.literal(270)])
 
-const Node = z.object({
-  id: z.string(),
-  /** A SimScript create() kind (validated against ANCHOR_INDEX / the mechanics
-   *  and optics tables at compile time, not here — the class list evolves). */
-  cls: z.string(),
+export const IRNode = z.object({
+  id: z.string().min(1),
+  /** A SimScript kind (validated at compile time, not here). */
+  cls: z.string().min(1),
   conf: z.number().min(0).max(1),
+  /** Top-3 alternatives for the correction menu. */
   alt: z.array(z.object({ cls: z.string(), conf: z.number() })).max(3).optional(),
   bbox: z.tuple([z.number(), z.number(), z.number(), z.number()]),
+  /** Pose; polarity lives here. */
   rot: Rot,
   /** Mechanics/optics: the part's turn in degrees, any value (a 30° ramp is not a multiple of 90). Screen frame, y down. */
   angle: z.number().optional(),
   flip: z.boolean().optional(),
+  /** Raw text per parameter, e.g. { R: '10k' } — the compiler parses units. */
   values: z.record(z.string(), z.string()).optional(),
   source: z.enum(['ink', 'photo']),
 })
 
-const Pin = z.object({ node: z.string(), pin: z.string() })
+/** Pin names are SimScript anchors (.positive, .a, .anode, .in1 …). */
+export const IRPin = z.object({ node: z.string().min(1), pin: z.string().min(1) })
 
-const Edge = z.object({
-  a: Pin,
-  b: Pin,
+export const IREdge = z.object({
+  a: IRPin,
+  b: IRPin,
   kind: z.enum(['wire', 'rope', 'rod', 'spring', 'damper']),
-  conf: z.number(),
+  conf: z.number().min(0).max(1),
 })
 
-const Label = z.object({
+export const IRLabel = z.object({
   text: z.string(),
   bbox: z.array(z.number()).length(4),
   attachedTo: z.string().optional(),
 })
 
-const Doubt = z.object({
+export const IRDoubt = z.object({
   ref: z.string(),
   why: z.enum(['low-confidence', 'ambiguous-junction', 'dangling-wire', 'unreadable-value']),
 })
 
 export const SketchIR = z.object({
   domain: z.enum(['circuit', 'digital', 'mechanics', 'optics', 'diagram']),
-  nodes: z.array(Node),
-  edges: z.array(Edge),
-  labels: z.array(Label),
-  doubts: z.array(Doubt),
+  nodes: z.array(IRNode),
+  edges: z.array(IREdge),
+  labels: z.array(IRLabel),
+  doubts: z.array(IRDoubt),
 })
 
+export type SketchIRNode = z.infer<typeof IRNode>
+export type SketchIREdge = z.infer<typeof IREdge>
+export type SketchIRDoubt = z.infer<typeof IRDoubt>
 export type SketchIRType = z.infer<typeof SketchIR>
-export type IRNode = z.infer<typeof Node>
-export type IREdge = z.infer<typeof Edge>
-export type IRDoubt = z.infer<typeof Doubt>
-
-/** Ghost-overlay dot colour for a confidence (plan 3.4). */
-export function confTier(conf: number): 'green' | 'amber' | 'red' {
-  return conf >= 0.9 ? 'green' : conf >= 0.6 ? 'amber' : 'red'
-}

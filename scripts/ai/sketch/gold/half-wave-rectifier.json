@@ -1,91 +1,96 @@
 {
-  "domain": "circuit",
-  "nodes": [
-    {
-      "id": "s",
-      "cls": "ac-source",
-      "conf": 0.95,
-      "bbox": [
-        40,
-        60,
-        60,
-        30
-      ],
-      "rot": 0,
-      "values": {
-        "V": "12",
-        "f": "50"
+  "name": "half-wave-rectifier",
+  "description": "AC source, diode and load — structural.",
+  "ir": {
+    "domain": "circuit",
+    "nodes": [
+      {
+        "id": "ac1",
+        "cls": "ac-source",
+        "conf": 1,
+        "bbox": [
+          40,
+          40,
+          60,
+          30
+        ],
+        "rot": 0,
+        "values": {
+          "V": "5",
+          "f": "50"
+        },
+        "source": "ink"
       },
-      "source": "ink"
-    },
-    {
-      "id": "d",
-      "cls": "diode",
-      "conf": 0.95,
-      "bbox": [
-        130,
-        60,
-        60,
-        30
-      ],
-      "rot": 0,
-      "source": "ink"
-    },
-    {
-      "id": "r",
-      "cls": "resistor",
-      "conf": 0.95,
-      "bbox": [
-        220,
-        60,
-        60,
-        30
-      ],
-      "rot": 0,
-      "values": {
-        "R": "1k"
+      {
+        "id": "d1",
+        "cls": "diode",
+        "conf": 1,
+        "bbox": [
+          150,
+          40,
+          60,
+          30
+        ],
+        "rot": 0,
+        "source": "ink"
       },
-      "source": "ink"
-    }
-  ],
-  "edges": [
-    {
-      "a": {
-        "node": "s",
-        "pin": "positive"
+      {
+        "id": "r1",
+        "cls": "resistor",
+        "conf": 1,
+        "bbox": [
+          260,
+          40,
+          60,
+          30
+        ],
+        "rot": 0,
+        "values": {
+          "R": "1k"
+        },
+        "source": "ink"
+      }
+    ],
+    "edges": [
+      {
+        "a": {
+          "node": "ac1",
+          "pin": "positive"
+        },
+        "b": {
+          "node": "d1",
+          "pin": "anode"
+        },
+        "kind": "wire",
+        "conf": 1
       },
-      "b": {
-        "node": "d",
-        "pin": "anode"
+      {
+        "a": {
+          "node": "d1",
+          "pin": "cathode"
+        },
+        "b": {
+          "node": "r1",
+          "pin": "a"
+        },
+        "kind": "wire",
+        "conf": 1
       },
-      "kind": "wire",
-      "conf": 0.95
-    },
-    {
-      "a": {
-        "node": "d",
-        "pin": "cathode"
-      },
-      "b": {
-        "node": "r",
-        "pin": "a"
-      },
-      "kind": "wire",
-      "conf": 0.95
-    },
-    {
-      "a": {
-        "node": "r",
-        "pin": "b"
-      },
-      "b": {
-        "node": "s",
-        "pin": "negative"
-      },
-      "kind": "wire",
-      "conf": 0.95
-    }
-  ],
-  "labels": [],
-  "doubts": []
+      {
+        "a": {
+          "node": "r1",
+          "pin": "b"
+        },
+        "b": {
+          "node": "ac1",
+          "pin": "negative"
+        },
+        "kind": "wire",
+        "conf": 1
+      }
+    ],
+    "labels": [],
+    "doubts": []
+  },
+  "expect": []
 }

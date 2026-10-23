@@ -1,62 +1,139 @@
 {
-  "domain": "circuit",
-  "nodes": [
-    {
-      "id": "v",
-      "cls": "battery",
-      "conf": 0.95,
-      "bbox": [
-        40,
-        60,
-        60,
-        30
-      ],
-      "rot": 0,
-      "values": {
-        "V": "2"
+  "name": "opamp-follower",
+  "description": "Voltage follower holds 3 V across a 1k load.",
+  "ir": {
+    "domain": "circuit",
+    "nodes": [
+      {
+        "id": "vin",
+        "cls": "battery",
+        "conf": 1,
+        "bbox": [
+          40,
+          40,
+          60,
+          30
+        ],
+        "rot": 0,
+        "values": {
+          "V": "3"
+        },
+        "source": "ink"
       },
-      "source": "ink"
-    },
+      {
+        "id": "op1",
+        "cls": "opamp",
+        "conf": 1,
+        "bbox": [
+          150,
+          40,
+          60,
+          30
+        ],
+        "rot": 0,
+        "source": "ink"
+      },
+      {
+        "id": "rl",
+        "cls": "resistor",
+        "conf": 1,
+        "bbox": [
+          260,
+          40,
+          60,
+          30
+        ],
+        "rot": 0,
+        "values": {
+          "R": "1k"
+        },
+        "source": "ink"
+      },
+      {
+        "id": "g1",
+        "cls": "gnd",
+        "conf": 1,
+        "bbox": [
+          370,
+          40,
+          60,
+          30
+        ],
+        "rot": 0,
+        "source": "ink"
+      }
+    ],
+    "edges": [
+      {
+        "a": {
+          "node": "vin",
+          "pin": "positive"
+        },
+        "b": {
+          "node": "op1",
+          "pin": "in+"
+        },
+        "kind": "wire",
+        "conf": 1
+      },
+      {
+        "a": {
+          "node": "op1",
+          "pin": "out"
+        },
+        "b": {
+          "node": "op1",
+          "pin": "in-"
+        },
+        "kind": "wire",
+        "conf": 1
+      },
+      {
+        "a": {
+          "node": "op1",
+          "pin": "out"
+        },
+        "b": {
+          "node": "rl",
+          "pin": "a"
+        },
+        "kind": "wire",
+        "conf": 1
+      },
+      {
+        "a": {
+          "node": "rl",
+          "pin": "b"
+        },
+        "b": {
+          "node": "g1",
+          "pin": "terminal"
+        },
+        "kind": "wire",
+        "conf": 1
+      },
+      {
+        "a": {
+          "node": "vin",
+          "pin": "negative"
+        },
+        "b": {
+          "node": "g1",
+          "pin": "terminal"
+        },
+        "kind": "wire",
+        "conf": 1
+      }
+    ],
+    "labels": [],
+    "doubts": []
+  },
+  "expect": [
     {
-      "id": "a",
-      "cls": "opamp",
-      "conf": 0.95,
-      "bbox": [
-        130,
-        60,
-        60,
-        30
-      ],
-      "rot": 0,
-      "source": "ink"
+      "part": "rl",
+      "channel": "V",
+      "value": 3,
+      "tol": 0.1
     }
-  ],
-  "edges": [
-    {
-      "a": {
-        "node": "v",
-        "pin": "positive"
-      },
-      "b": {
-        "node": "a",
-        "pin": "in+"
-      },
-      "kind": "wire",
-      "conf": 0.95
-    },
-    {
-      "a": {
-        "node": "a",
-        "pin": "in-"
-      },
-      "b": {
-        "node": "a",
-        "pin": "out"
-      },
-      "kind": "wire",
-      "conf": 0.95
-    }
-  ],
-  "labels": [],
-  "doubts": []
+  ]
 }
