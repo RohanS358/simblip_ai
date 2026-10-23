@@ -1,0 +1,327 @@
+'use client'
+
+// Public storage API — everything else in the app imports THIS module, not
+// opfs.ts/manifest.ts directly. Wires OPFS (bytes) + manifest (identity/sync
+// status) + the Postgres-backed /api/storage routes together.
+//
+// LOCAL BY DEFAULT: putFile() never touches the network — every file lives
+// in OPFS on this device. A file's bytes reach the cloud only when the user
+// opts it in ("Back up & sync" on the file, "Sync with files" on a page or
+// folder, or a category in Sync settings). Then device-file-sync.ts uploads
+// it through uploadToCloud() and the copy STAYS in the cloud — counted
+// against the 150 MB project quota — until the user turns sync off again or
+// deletes the file. Other devices download it on demand (getFile).
+//
+// The other caller of uploadToCloud() is a board presentation's temporary
+// session upload, which cleans up after itself.
+
+import { uid } from '@/lib/scene/types'
+import { getAccessToken } from '@/lib/auth/store'
+import * as opfs from './opfs'
+import * as manifest from './manifest'
+import type { FileManifestEntry } from './manifest-types'
+
+async function sha256(blob: Blob): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', await blob.arrayBuffer())
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+/** Store a new file: writes OPFS, creates a manifest entry. Local only —
+ *  see this file's header. Returns the manifest id to hang a FileNode.fileId
+ *  (lib/scene/types.ts) off of. */
+export async function putFile(blob: Blob, name: string, mime: string, ownerId: string): Promise<string> {
+  const hash = await sha256(blob)
+  try {
+    const all = await manifest.listAllEntries()
+    // Same owner only: OPFS is per-user (/simblip/<userId>/files, see
+    // opfs.ts), so another account's id names a directory this one can't
+    // read — deduping across owners hands back an id that never resolves.
+    const existing = all.find((e) => e.sha256 === hash && e.ownerId === ownerId)
+    if (existing) {
+      // ...and only if the bytes are STILL here. A manifest row outlives its
+      // blob whenever the browser evicts best-effort storage, or when the row
+      // was pulled from the cloud on a device that never held the file. Handing
+      // that id back is what made a freshly uploaded file refuse to open: the
+      // new page pointed at an id with nothing behind it, and re-uploading —
+      // the obvious thing to try — deduped straight back onto the same hole.
+      // Rewriting the bytes under the SAME id instead of minting a new one
+      // heals every page and picture object already referencing it.
+      const local = await opfs.readFile(existing.id)
+      if (local && local.size === blob.size) return existing.id
+      await opfs.writeFile(existing.id, blob)
+      await manifest.putEntry({ ...existing, name, mime, size: blob.size, modifiedAt: Date.now() })
+      return existing.id
+    }
+  } catch {
+    // best effort lookup — proceed with store if error
+  }
+  const id = uid()
+  await opfs.writeFile(id, blob)
+  const entry: FileManifestEntry = {
+    id,
+    ownerId,
+    name,
+    mime,
+    size: blob.size,
+    sha256: hash,
+    createdAt: Date.now(),
+    modifiedAt: Date.now(),
+    syncStatus: 'local-only',
+    cloudBackedUp: false,
+  }
+  await manifest.putEntry(entry)
+  return id
+}
+
+type ManifestRow = {
+  id: string
+  owner_id: string
+  name: string
+  mime: string
+  size: number
+  sha256: string
+  updated_at: string
+}
+
+/** Read a file: OPFS first (offline-first) — the only place a file normally
+ *  lives, since putFile() no longer uploads anywhere. Falls back to fetching
+ *  a cloud copy for the narrow cases where one transiently exists (mid device
+ *  sync, or a board session's presentation upload) and re-seeds OPFS +
+ *  manifest so the next read is local. /api/storage/[id] streams the bytes
+ *  straight from Postgres, scoped server-side to the caller's owner_id. */
+// ponytail: in-memory only, clears on reload; good enough to stop the
+// per-heartbeat/per-mount retry storm on files the server confirmed missing.
+const missingFileIds = new Map<string, number>()
+const MISSING_TTL_MS = 5 * 60_000
+
+export async function getFile(fileId: string): Promise<Blob | null> {
+  const local = await opfs.readFile(fileId)
+  if (local) return local
+
+  const missingSince = missingFileIds.get(fileId)
+  if (missingSince && Date.now() - missingSince < MISSING_TTL_MS) return null
+
+  // A manifest entry that was never backed up means the bytes provably are
+  // not on the server (putFile is offline-only — see this file's header), so
+  // asking for them can only 404. Skipping the request removes both the
+  // wasted round trip and the "Failed to load resource: 404" the browser
+  // logs for it, which Lighthouse counts as a console error. No entry at all
+  // is the genuinely unknown case (a page shared from another device), and
+  // that one still has to ask.
+  const entry = await manifest.getEntry(fileId).catch(() => null)
+  if (entry && !entry.cloudBackedUp) return null
+
+  const token = getAccessToken()
+  if (!token) return null
+  try {
+    const res = await fetch(`/api/storage/${fileId}`, { headers: { Authorization: `Bearer ${token}` } })
+    if (!res.ok) {
+      if (res.status === 404) missingFileIds.set(fileId, Date.now())
+      return null
+    }
+    missingFileIds.delete(fileId)
+    const blob = await res.blob()
+    await opfs.writeFile(fileId, blob)
+
+    void fetch(`/api/pg/simblip_file_manifest?id=eq.${fileId}&select=*`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => (r.ok ? (r.json() as Promise<ManifestRow[]>) : []))
+      .then(([row]) => {
+        if (!row) return
+        return manifest.putEntry({
+          id: row.id,
+          ownerId: row.owner_id,
+          name: row.name,
+          mime: row.mime,
+          size: row.size,
+          sha256: row.sha256,
+          createdAt: Date.parse(row.updated_at),
+          modifiedAt: Date.parse(row.updated_at),
+          syncStatus: 'synced',
+          cloudBackedUp: true,
+          cloudUrl: row.id,
+        })
+      })
+      .catch(() => {
+        // best-effort — the file itself is already cached in OPFS, which is
+        // what matters; a missing manifest row just means this device's
+        // "my files" list won't show it until the next successful pull
+      })
+
+    return blob
+  } catch {
+    return null
+  }
+}
+
+/** Is this file opted in to cross-device sync? Absent flag = no (the default
+ *  for every file created before the toggle existed, and every new one). */
+export async function isSyncEnabled(fileId: string): Promise<boolean> {
+  const entry = await manifest.getEntry(fileId)
+  return entry?.syncEnabled === true
+}
+
+/**
+ * Turn cross-device sync on/off for one file.
+ *
+ * Turning it OFF also removes any copy already in the cloud: leaving the
+ * bytes up there after the user said "stop syncing this" would make the
+ * toggle a lie. The local OPFS copy is untouched — this is a sync setting,
+ * not a delete.
+ */
+export async function setSyncEnabled(fileId: string, enabled: boolean): Promise<void> {
+  const entry = await manifest.getEntry(fileId)
+  if (!entry) return
+  await manifest.putEntry({
+    ...entry,
+    syncEnabled: enabled,
+    ...(enabled ? { syncHeld: false } : {}),
+    // Re-arm the uploader: a file previously pushed and then disabled is
+    // 'synced' + cloudBackedUp, and pushFilesToDevice only ever uploads
+    // 'local-only'/'sync-failed' — so without this reset, re-enabling would
+    // never re-upload the bytes it just deleted below.
+    ...(enabled ? {} : { syncStatus: 'local-only' as const, cloudBackedUp: false, cloudUrl: undefined }),
+  })
+  if (enabled) return
+
+  const token = getAccessToken()
+  if (!token || !entry.cloudBackedUp) return
+  try {
+    await fetch(`/api/storage/${fileId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  } catch {
+    // Best effort: the flag is already off, so nothing will re-upload it.
+    // A leftover blob is cleaned up by the next successful toggle or delete.
+  }
+}
+
+export async function deleteFiles(fileIds: string[]): Promise<void> {
+  const token = getAccessToken()
+  await Promise.all(
+    fileIds.map(async (id) => {
+      await opfs.deleteFile(id)
+      await manifest.deleteEntry(id)
+      if (token) {
+        try {
+          await fetch(`/api/storage/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+        } catch {
+          // best-effort — the local copy is already gone, which is what matters
+        }
+      }
+    })
+  )
+  // Sweep any tree nodes still pointing at a fileId that no longer has bytes
+  // behind it — e.g. deleting straight from the Storage settings panel,
+  // rather than deleting the page/folder that owns the file. removeNode()
+  // itself calls deleteFiles() (see workspace.ts), so this dynamic import is
+  // safe to run unconditionally: by the time it resolves, tree-driven
+  // deletes have already stripped their own nodes from the store, leaving
+  // nothing here to match and re-delete.
+  const idSet = new Set(fileIds)
+  const { useWorkspaceStore } = await import('@/lib/store/workspace')
+  const nodes = useWorkspaceStore.getState().nodes
+  const orphanedNodeIds = Object.values(nodes)
+    .filter((n) =>
+      (n.kind === 'file' && idSet.has(n.fileId)) ||
+      (n.kind === 'page' && n.fileUrl?.startsWith('opfs:') && idSet.has(n.fileUrl.slice('opfs:'.length)))
+    )
+    .map((n) => n.id)
+  orphanedNodeIds.forEach((nid) => useWorkspaceStore.getState().removeNode(nid))
+}
+
+// In-flight guard: pushFilesToDevice() runs once per online device and all
+// calls race concurrently, each independently re-reading the manifest and
+// seeing the same not-yet-synced entry — without this, N concurrent callers
+// each uploaded the same bytes as a separate object (this is what blew a
+// single account's storage quota before it moved to Postgres). syncStatus
+// alone can't dedupe this: it only flips to 'uploading'/'synced' AFTER an
+// await, so two calls both read 'local-only' before either writes back.
+const uploading = new Set<string>()
+
+export class UploadError extends Error {
+  constructor(public reason: string) {
+    super(reason === 'quota' ? 'Cloud storage is full' : reason)
+  }
+}
+
+/** Every file this account has a cloud copy of — Settings → Storage lists
+ *  these, including files not yet downloaded to this device. */
+export interface CloudUsage {
+  limit: number
+  used: number
+  categories: { tree: number; pages: number; account: number; files: number }
+  files: { id: string; name: string; mime: string; size: number; updated_at: string }[]
+  largestPages: { id: string; size: number }[]
+}
+
+export async function fetchCloudUsage(): Promise<CloudUsage | null> {
+  const token = getAccessToken()
+  if (!token) return null
+  const res = await fetch('/api/storage/usage', { headers: { Authorization: `Bearer ${token}` } })
+  return res.ok ? ((await res.json()) as CloudUsage) : null
+}
+
+/** "Download from cloud": bring a cloud-only file onto this device. */
+export async function downloadFromCloud(fileId: string): Promise<boolean> {
+  missingFileIds.delete(fileId)
+  return (await getFile(fileId)) !== null
+}
+
+/** Is this file's byte content on this device (OPFS)? */
+export async function hasLocalCopy(fileId: string): Promise<boolean> {
+  return (await opfs.readFile(fileId)) !== null
+}
+
+/** Push one manifest entry's bytes to /api/storage/[id] (Postgres-backed;
+ *  see db/schema.sql's simblip_file_blobs). Exported for the two explicit
+ *  callers this file's header describes — never call this just because a
+ *  file exists locally; see putFile()'s doc comment. */
+export async function uploadToCloud(entry: FileManifestEntry): Promise<void> {
+  const token = getAccessToken()
+  if (!token) return // offline/local-demo mode — stays local-only, not an error
+  if (uploading.has(entry.id)) return // another concurrent call is already pushing this file
+  uploading.add(entry.id)
+  await manifest.putEntry({ ...entry, syncStatus: 'uploading' })
+  try {
+    const blob = await opfs.readFile(entry.id)
+    if (!blob) throw new Error('local blob missing')
+
+    // The server re-hashes the body and rejects a mismatch (422), so a
+    // truncated or corrupted upload can never be stored as the real file.
+    const params = new URLSearchParams({ name: entry.name, mime: entry.mime, sha256: entry.sha256 })
+    const res = await fetch(`/api/storage/${entry.id}?${params}`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': entry.mime || 'application/octet-stream' },
+      body: blob,
+    })
+    if (!res.ok) {
+      const body = (await res.json().catch(() => ({}))) as { error?: string }
+      throw new UploadError(res.status === 413 ? 'quota' : body.error ?? `Upload ${res.status}`)
+    }
+
+    await manifest.putEntry({
+      ...entry,
+      syncStatus: 'synced',
+      cloudBackedUp: true,
+      cloudUrl: entry.id,
+      syncError: undefined,
+    })
+  } catch (err) {
+    // Nothing partial is ever stored server-side (one transaction per PUT),
+    // so a failed upload consumes no quota; it just stays local.
+    await manifest.putEntry({
+      ...entry,
+      syncStatus: 'sync-failed',
+      syncError: err instanceof UploadError ? err.reason : 'network',
+    })
+    if (err instanceof UploadError && err.reason === 'quota') throw err
+  } finally {
+    uploading.delete(entry.id)
+  }
+}
+
