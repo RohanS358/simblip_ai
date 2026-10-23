@@ -1,0 +1,420 @@
+'use client'
+
+// Editor preferences — pen feel and notebook layout.
+//
+// These belong to the DEVICE, not the account: how much smoothing your hand
+// wants, which way you scroll, how big the UI should be. So they persist in
+// plain localStorage (not the per-user scoped storage) and are shared by every
+// account that signs in on this browser.
+
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+
+export type ScrollAxis = 'free' | 'vertical' | 'horizontal'
+export type GridType = 'dots' | 'lines' | 'graph' | 'none'
+export type DockSide = 'bottom' | 'top' | 'left' | 'right'
+export type PenStyle = 'ink' | 'pen' | 'highlighter' | 'pointer'
+
+export interface PenPrefs {
+  /** Smoothness: how much the finished outline is rounded (0 keeps every
+   *  wobble, 1 gives clean flowing curves). */
+  smoothing: number
+  /** Stability: how much the ink trails the hand to steady it. The tip stays
+   *  glued to the pointer (see components/objects/ink.ts), so high values
+   *  steady the line without the old "sticky" lag. */
+  streamline: number
+  /** Sensitivity: how strongly width follows stylus pressure. Flat styles
+   *  (pen, highlighter) ignore it entirely. */
+  sensitivity: number
+  size: number
+  color: string
+  style: PenStyle
+  /** Auto pen (lib/scene/pen-auto.ts): pick the style per stroke from context.
+   *  Optional so stored prefs from before it existed count as ON. */
+  autoStyle?: boolean
+  /** Auto tool: after working in a note, drawing outside it switches to Select.
+   *  Optional for the same reason — undefined counts as ON. */
+  autoTool?: boolean
+  /** User-added colours, shown after the basic palette in pen settings. */
+  customColors: string[]
+  /** Scribble-to-erase: 0 = must scribble hard and long before anything is
+   *  deleted, 1 = a light scratch is enough. Higher is easier to trigger. */
+  scribbleSensitivity: number
+  /** Multiplier for dot size when drawing a single point (a tap). */
+  dotSize: number
+}
+
+export interface NotebookPrefs {
+  scrollAxis: ScrollAxis
+  grid: GridType
+  /** Interface UI scale: panels, docks, inspector chrome. 1 = default. */
+  uiScale: number
+  /**
+   * Components UI scale: text and chrome inside canvas objects (tables,
+   * formulas, graphs, notes, labs, …) and the floating calculator. 1 = default.
+   * Independent of canvas zoom and of Interface UI.
+   */
+  componentScale: number
+  dock: DockSide
+  /** Grid cell size in canvas pixels. Default 40. Range 16–80. */
+  gridSize: number
+  /** Disable double-tap-to-zoom on the canvas. */
+  disableDoubleTapZoom: boolean
+  /** Freeze the canvas zoom level so pinch/scroll cannot change it. */
+  lockZoom: boolean
+  /** Panel text size (docked panels only — the canvas keeps its own zoom). */
+  panelFontScale: number
+  /** Panel text spacing/airiness. 1 = default. */
+  panelSpacing: number
+}
+
+/** How the whole UI moves. See lib/motion.ts. */
+export type MotionStyle = 'bouncy' | 'smooth' | 'none'
+
+/** UI tint — resolves to the matching --accent-* variable per theme. */
+export type AccentName = 'blue' | 'violet' | 'mint' | 'amber' | 'rose' | 'custom'
+
+export interface AppearancePrefs {
+  motion: MotionStyle
+  /** Touch devices: lift the selected object out of the canvas while its
+   *  properties are open, so you can see what your edits do to it. */
+  focusOnEdit: boolean
+  /** The interface tint: selection, buttons, active states. */
+  accent: AccentName
+  /** Hex color used when accent === 'custom'. */
+  customAccent: string
+}
+
+export const DEFAULT_APPEARANCE: AppearancePrefs = {
+  motion: 'bouncy',
+  focusOnEdit: true,
+  accent: 'blue',
+  customAccent: '#3b82f6',
+}
+
+import type { KeyCombo } from '../keymap'
+
+export interface HotkeyPrefs {
+  /** action id -> rebound combo. Absent = use the action's default. */
+  overrides: Record<string, KeyCombo>
+}
+
+export const DEFAULT_HOTKEYS: HotkeyPrefs = { overrides: {} }
+
+export interface GesturePrefs {
+  /** Multiplier applied to every pinch-zoom ratio (pointer, ctrl+wheel,
+   *  Safari gesturechange alike). 1 = unchanged. Range 0.5-2. */
+  pinchSensitivity: number
+  /** Touch object-drag commit delay in ms before a touch-and-hold starts
+   *  moving an object (see canvas.tsx DRAG_HOLD_MS). Range 50-500. */
+  holdBeforeDragMs: number
+  /** Distance in px a touch must travel to be treated as a swipe/scroll
+   *  instead of a drag (see canvas.tsx DRAG_HOLD_STILL_PX). Range 2-24. */
+  tapVsDragPx: number
+  /** Touch contact radius in px above which a touch point is rejected as a
+   *  palm instead of a finger (see hooks/use-pinch-zoom.ts PALM_RADIUS).
+   *  Range 0-60; 0 disables palm rejection. */
+  palmRejectRadiusPx: number
+  /** On documents, slides and PDFs with a drawing tool picked, does a FINGER
+   *  draw? 'auto': yes until a stylus is used on this device, then fingers
+   *  scroll and select while the pen writes (penSeen flips it). Whiteboards
+   *  are unaffected — their finger behaviour is their own. */
+  fingerInk: 'auto' | 'always' | 'never'
+  /** A stylus has been used on this device (set automatically). */
+  penSeen: boolean
+  /** The pen's eraser end or barrel button erases ink while held. */
+  penButtonErases: boolean
+}
+
+export const DEFAULT_GESTURES: GesturePrefs = {
+  pinchSensitivity: 1,
+  holdBeforeDragMs: 150,
+  tapVsDragPx: 8,
+  palmRejectRadiusPx: 20,
+  fingerInk: 'auto',
+  penSeen: false,
+  penButtonErases: true,
+}
+
+/** Should a finger touch draw ink on a document/slide/PDF right now? */
+export function fingerDraws(g: GesturePrefs = usePrefs.getState().gestures): boolean {
+  return g.fingerInk === 'always' || (g.fingerInk !== 'never' && !g.penSeen)
+}
+
+export type AngleUnit = 'deg' | 'rad'
+export type NumberStyle = 'auto' | 'fixed' | 'sci' | 'eng'
+
+export interface MathPrefs {
+  /** Digits after the decimal point in every readout. */
+  precision: number
+  /** auto = switch to exponent for very large/small; fixed = never; sci/eng = always. */
+  numberStyle: NumberStyle
+  /** Angles shown in degrees or radians (channels stay SI internally). */
+  angleUnit: AngleUnit
+  /** Show the unit next to every value (12.4 cm/s vs 12.4). */
+  showUnits: boolean
+  /** Thousands separators — nice for money, noisy for physics. */
+  groupDigits: boolean
+  /** Anything closer to zero than this reads as exactly 0, so a value that is
+   *  really 1e-17 from floating-point error doesn't look like a signal. */
+  zeroThreshold: number
+}
+
+export const DEFAULT_PACKAGES: Record<string, boolean> = {
+  mechanics: true,
+  electrical: true,
+  electronics: true,
+  digital: true,
+  optics: true,
+  waves: true,
+  quantum: true,
+  economics: true,
+  dsa: true,
+}
+
+export type DockPositionMode = 'fixed' | 'draggable'
+export type DockLayoutMode = 'compact' | 'extended'
+export type DockContainerStyle = 'floating' | 'fixed-bar' | 'sundial'
+export type DockShape = 'pill' | 'soft' | 'sharp'
+export type DockColorTheme = 'glass' | 'translucent' | 'solid' | 'accent-tinted' | 'dark-glass'
+export type DockSize = 'compact' | 'normal' | 'large'
+
+export interface DockPrefs {
+  positionMode: DockPositionMode
+  fixedSide: DockSide
+  dragPosition: { x: number; y: number } | null
+  layoutMode: DockLayoutMode
+  containerStyle: DockContainerStyle
+  shape: DockShape
+  colorTheme: DockColorTheme
+  size: DockSize
+  autohide: boolean
+  showTransport: boolean
+  showPageMenu: boolean
+  showToolsMenu: boolean
+}
+
+export const DEFAULT_DOCK_PREFS: DockPrefs = {
+  positionMode: 'fixed',
+  fixedSide: 'bottom',
+  dragPosition: null,
+  layoutMode: 'compact',
+  containerStyle: 'floating',
+  shape: 'pill',
+  colorTheme: 'glass',
+  size: 'normal',
+  autohide: false,
+  showTransport: true,
+  showPageMenu: true,
+  showToolsMenu: true,
+}
+
+export interface PrefsState {
+  pen: PenPrefs
+  notebook: NotebookPrefs
+  dock: DockPrefs
+  math: MathPrefs
+  appearance: AppearancePrefs
+  hotkeys: HotkeyPrefs
+  gestures: GesturePrefs
+  packages: Record<string, boolean>
+  setPen: (p: Partial<PenPrefs>) => void
+  setNotebook: (p: Partial<NotebookPrefs>) => void
+  setDock: (p: Partial<DockPrefs>) => void
+  setMath: (p: Partial<MathPrefs>) => void
+  setAppearance: (p: Partial<AppearancePrefs>) => void
+  setHotkeys: (p: Partial<HotkeyPrefs>) => void
+  setGestures: (p: Partial<GesturePrefs>) => void
+  setPackage: (id: string, enabled: boolean) => void
+  reset: () => void
+}
+
+export const DEFAULT_MATH: MathPrefs = {
+  precision: 3,
+  numberStyle: 'auto',
+  angleUnit: 'deg',
+  showUnits: true,
+  groupDigits: false,
+  zeroThreshold: 1e-9,
+}
+
+export const DEFAULT_PEN: PenPrefs = {
+  smoothing: 0.35, // was 0.55 — noticeably less mushy
+  streamline: 0.28, // was 0.5 — the ink now keeps up with the hand
+  sensitivity: 0.55,
+  size: 2.5, // a pen, not a marker
+  color: 'var(--foreground)',
+  style: 'ink',
+  customColors: [],
+  scribbleSensitivity: 0.5,
+  dotSize: 2.0,
+}
+
+export const DEFAULT_NOTEBOOK: NotebookPrefs = {
+  scrollAxis: 'free',
+  grid: 'dots',
+  uiScale: 1,
+  componentScale: 1,
+  dock: 'bottom',
+  gridSize: 40,
+  disableDoubleTapZoom: false,
+  lockZoom: false,
+  panelFontScale: 1,
+  panelSpacing: 1,
+}
+
+/** Per-style overrides applied on top of the sliders. `pressure: false`
+ *  means the stroke is drawn flat at the base thickness — the sensitivity
+ *  slider only applies to pressure styles. `fade` marks presenter ink: the
+ *  stroke is never committed to the page, it just fades out (see
+ *  POINTER_FADE_MS in canvas.tsx). (Old stored styles 'marker' and
+ *  'technical' migrate to 'pen'; committed strokes carrying those names
+ *  still render via the `?? 1` opacity fallbacks at the call sites.) */
+export const PEN_STYLES: Record<
+  PenStyle,
+  { label: string; opacity: number; pressure: boolean; fade?: boolean }
+> = {
+  ink: { label: 'Ink', opacity: 1, pressure: true },
+  pen: { label: 'Pen', opacity: 1, pressure: false },
+  highlighter: { label: 'Highlighter', opacity: 0.35, pressure: false },
+  pointer: { label: 'Pointer', opacity: 1, pressure: false, fade: true },
+}
+
+export const PEN_COLORS = [
+  'var(--foreground)',
+  'var(--accent-blue)',
+  'var(--accent-mint)',
+  'var(--accent-amber)',
+  'var(--accent-rose)',
+  'var(--accent-violet)',
+]
+
+export const usePrefs = create<PrefsState>()(
+  persist(
+    (set) => ({
+      pen: { ...DEFAULT_PEN },
+      notebook: { ...DEFAULT_NOTEBOOK },
+      dock: { ...DEFAULT_DOCK_PREFS },
+      math: { ...DEFAULT_MATH },
+      appearance: { ...DEFAULT_APPEARANCE },
+      hotkeys: { ...DEFAULT_HOTKEYS },
+      gestures: { ...DEFAULT_GESTURES },
+      packages: { ...DEFAULT_PACKAGES },
+      setPen: (p) =>
+        set((s) => ({
+          pen: {
+            ...s.pen,
+            ...p,
+            // The thickness slider's full travel is 0.5–16 — clamp instead of
+            // silently snapping back mid-drag.
+            ...(p.size !== undefined ? { size: Math.min(16, Math.max(0.5, p.size)) } : {}),
+          },
+        })),
+      setNotebook: (p) =>
+        set((s) => {
+          const nextNb = { ...s.notebook, ...p }
+          // keep notebook.dock synced with dock.fixedSide if modified via setNotebook
+          const nextDock = p.dock ? { ...s.dock, fixedSide: p.dock } : s.dock
+          return { notebook: nextNb, dock: nextDock }
+        }),
+      setDock: (p) =>
+        set((s) => {
+          const nextDock = { ...s.dock, ...p }
+          const nextNb = p.fixedSide ? { ...s.notebook, dock: p.fixedSide } : s.notebook
+          return { dock: nextDock, notebook: nextNb }
+        }),
+      setMath: (p) => set((s) => ({ math: { ...s.math, ...p } })),
+      setAppearance: (p) => set((s) => ({ appearance: { ...s.appearance, ...p } })),
+      setHotkeys: (p) => set((s) => ({ hotkeys: { ...s.hotkeys, ...p } })),
+      setGestures: (p) => set((s) => ({ gestures: { ...s.gestures, ...p } })),
+      setPackage: (id, enabled) =>
+        set((s) => ({
+          packages: {
+            ...DEFAULT_PACKAGES,
+            ...s.packages,
+            [id]: enabled,
+          },
+        })),
+      reset: () =>
+        set({
+          pen: { ...DEFAULT_PEN },
+          notebook: { ...DEFAULT_NOTEBOOK },
+          dock: { ...DEFAULT_DOCK_PREFS },
+          math: { ...DEFAULT_MATH },
+          appearance: { ...DEFAULT_APPEARANCE },
+          hotkeys: { ...DEFAULT_HOTKEYS },
+          gestures: { ...DEFAULT_GESTURES },
+          packages: { ...DEFAULT_PACKAGES },
+        }),
+    }),
+    {
+      name: 'simblip-preferences', // device-wide, not per user
+      version: 5,
+      // Sanitise whatever localStorage hands back
+      migrate: (persisted) => {
+        const s = (persisted ?? {}) as Record<string, unknown>
+        const pen = (s.pen ?? {}) as Record<string, unknown>
+        const nb = (s.notebook ?? {}) as Record<string, unknown>
+        const dock = (s.dock ?? {}) as Record<string, unknown>
+        const num = (v: unknown, d: number, lo: number, hi: number) =>
+          typeof v === 'number' && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d
+        const style = pen.style as string
+
+        const initialFixedSide = (dock.fixedSide as DockSide) ?? (nb.dock as DockSide) ?? DEFAULT_DOCK_PREFS.fixedSide
+
+        s.pen = {
+          ...DEFAULT_PEN,
+          ...pen,
+          smoothing: num(pen.smoothing, DEFAULT_PEN.smoothing, 0, 1),
+          streamline: num(pen.streamline, DEFAULT_PEN.streamline, 0, 0.9),
+          sensitivity: num(pen.sensitivity, DEFAULT_PEN.sensitivity, 0, 1),
+          size: num(pen.size, DEFAULT_PEN.size, 0.5, 16),
+          dotSize: num(pen.dotSize, DEFAULT_PEN.dotSize, 0.5, 5),
+          scribbleSensitivity: num(pen.scribbleSensitivity, DEFAULT_PEN.scribbleSensitivity, 0, 1),
+          style: style in PEN_STYLES ? style : style === 'marker' || style === 'technical' ? 'pen' : 'ink',
+          color: typeof pen.color === 'string' ? pen.color : DEFAULT_PEN.color,
+          customColors: Array.isArray(pen.customColors)
+            ? pen.customColors.filter((c): c is string => typeof c === 'string').slice(0, 12)
+            : [],
+        }
+
+        s.dock = {
+          ...DEFAULT_DOCK_PREFS,
+          ...dock,
+          fixedSide: initialFixedSide,
+        }
+
+        const hotkeys = (s.hotkeys ?? {}) as Record<string, unknown>
+        s.hotkeys = {
+          ...DEFAULT_HOTKEYS,
+          ...hotkeys,
+          overrides: typeof hotkeys.overrides === 'object' && hotkeys.overrides !== null ? hotkeys.overrides : {},
+        }
+
+        const gestures = (s.gestures ?? {}) as Record<string, unknown>
+        s.gestures = {
+          ...DEFAULT_GESTURES,
+          ...gestures,
+          pinchSensitivity: num(gestures.pinchSensitivity, DEFAULT_GESTURES.pinchSensitivity, 0.5, 2),
+          holdBeforeDragMs: num(gestures.holdBeforeDragMs, DEFAULT_GESTURES.holdBeforeDragMs, 50, 500),
+          tapVsDragPx: num(gestures.tapVsDragPx, DEFAULT_GESTURES.tapVsDragPx, 2, 24),
+          palmRejectRadiusPx: num(gestures.palmRejectRadiusPx, DEFAULT_GESTURES.palmRejectRadiusPx, 0, 60),
+          fingerInk: ['auto', 'always', 'never'].includes(gestures.fingerInk as string)
+            ? (gestures.fingerInk as GesturePrefs['fingerInk'])
+            : 'auto',
+          penSeen: gestures.penSeen === true,
+          penButtonErases: gestures.penButtonErases !== false,
+        }
+
+        return s as unknown as PrefsState
+      },
+    }
+  )
+)
+
+/** Non-reactive reads for hot paths (these run per pointer event / per frame). */
+export const penPrefs = (): PenPrefs => usePrefs.getState().pen
+export const mathPrefs = (): MathPrefs => usePrefs.getState().math
+export const dockPrefs = (): DockPrefs => usePrefs.getState().dock
+export const gesturePrefs = (): GesturePrefs => usePrefs.getState().gestures
+
