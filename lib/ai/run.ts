@@ -13,7 +13,8 @@ import { generateSimScript, GenerationFailedError, GeneratorUnavailableError, ty
 import { SIMSCRIPT_SYSTEM_PROMPT } from '@/lib/ai/simscript-corpus'
 import { classifyIntent, type Intent } from '@/lib/ai/route-intent'
 import { generateEditPlan, EditFailedError } from '@/lib/ai/edit'
-import { explain, EXPLAIN_SYSTEM_PROMPT } from '@/lib/ai/explain'
+import { explain, EXPLAIN_SYSTEM_PROMPT, toAnswerBlocks } from '@/lib/ai/explain'
+import { classifyPicture, pictureReply } from '@/lib/ai/picture'
 
 export const aiRequestSchema = z.object({
   prompt: z.string().min(1).max(4000),
@@ -200,6 +201,18 @@ export async function runAi(req: AiRequest, deps: RunDeps): Promise<void> {
       const g = await deps.explain()
       return done({ message: await g.generate(req.rawSystem, req.prompt, undefined, undefined, 3600, req.rawFormat) })
     }
+    // A request for a PICTURE is answered honestly before anything else: a text
+    // model cannot make a photo, and ASCII art passed off as one is a wrong
+    // answer. No model call for the reply.
+    const pic = classifyPicture(req.prompt, req.history?.at(-1)?.prompt)
+    if (pic?.kind === 'photo') {
+      emit({ event: 'intent', data: 'explain' })
+      // As an ANSWER, not a bare message: a message with no answer is styled as a
+      // failure in the panel.
+      const reply = pictureReply(pic.subject)
+      return done({ message: 'No picture can be made from text — here is what works.', answer: reply, blocks: toAnswerBlocks(reply) })
+    }
+
     // Tools first: "run it", "how fast is the ball?" have exact answers that
     // need no scene and no derivation.
     if (deps.act) {
