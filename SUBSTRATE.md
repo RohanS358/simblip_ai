@@ -54,3 +54,4 @@ These are read-only snapshots. Fix bugs in the main SIMBLIP repository and re-ve
 | File | Why | Source |
 |---|---|---|
 | `lib/optics/engine.ts` | ray tracer; the optics compiler (`lib/sketch/compile-optics.ts`) and its tests trace rays through the compiled scene | SIMBLIP `fdb6f36` |
+| `lib/server/auth.ts` | bearer-token claims (`bearerClaims`) read by the `/api/ai` request guard (`lib/server/ai-guard.ts`) | SIMBLIP `f47b612` |
