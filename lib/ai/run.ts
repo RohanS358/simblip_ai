@@ -15,6 +15,7 @@ import { classifyIntent, type Intent } from '@/lib/ai/route-intent'
 import { generateEditPlan, EditFailedError } from '@/lib/ai/edit'
 import { explain, EXPLAIN_SYSTEM_PROMPT, toAnswerBlocks } from '@/lib/ai/explain'
 import { classifyPicture, pictureReply, sanitizeSvg, svgDataUri, SVG_SYSTEM_PROMPT } from '@/lib/ai/picture'
+import { IMAGES_SHOWN, selectImages, type ImageHit, type ImageWant } from '@/lib/ai/image-search'
 
 export const aiRequestSchema = z.object({
   prompt: z.string().min(1).max(4000),
@@ -90,6 +91,9 @@ export interface RunDeps {
   script: () => Promise<SimScriptGenerator>
   explain: () => Promise<SimScriptGenerator>
   emit: (e: AiEvent) => void
+  /** Real pictures for a subject (Wikimedia Commons). Optional: a transport
+   *  with no network path to it simply falls back to the honest reply. */
+  images?: (subject: string, want: ImageWant) => Promise<ImageHit[]>
   /** The user's Stop. When it has fired, a thrown error is the stop itself and
    *  is re-thrown for the caller to show as "Stopped." — never wrapped into an
    *  "AI pipeline error" message. */
@@ -208,9 +212,35 @@ export async function runAi(req: AiRequest, deps: RunDeps): Promise<void> {
     const pic = classifyPicture(req.prompt, req.history?.at(-1)?.prompt)
     if (pic?.kind === 'photo') {
       emit({ event: 'intent', data: 'explain' })
-      // As an ANSWER, not a bare message: a message with no answer is styled as a
-      // failure in the panel.
-      const reply = pictureReply(pic.subject)
+      let found: ImageHit[] = []
+      let failed = false
+      if (deps.images) {
+        try {
+          found = await deps.images(pic.subject, pic.want)
+          // Four are always wanted. If this kind of picture cannot supply four
+          // high-resolution ones, top up from the other kind (photos <-> drawings).
+          if (selectImages(found).length < IMAGES_SHOWN) {
+            const more = await deps.images(pic.subject, pic.want === 'diagram' ? 'photo' : 'diagram').catch(() => [] as ImageHit[])
+            const seen = new Set(found.map((h) => h.src))
+            found = [...found, ...more.filter((h) => !seen.has(h.src))]
+          }
+        } catch {
+          failed = true
+        }
+      }
+      if (found.length) {
+        const shown = selectImages(found)
+        return done({
+          message:
+            shown.length === IMAGES_SHOWN
+              ? `Here are four high-resolution pictures of ${pic.subject} from Wikimedia Commons — the author and licence are under each.`
+              : `I could only find ${shown.length} high-resolution picture${shown.length === 1 ? '' : 's'} of ${pic.subject} on Wikimedia Commons — the author and licence are under ${shown.length === 1 ? 'it' : 'each'}.`,
+          images: shown.map(({ src, alt, href, credit }) => ({ src, alt, href, credit })),
+        })
+      }
+      // No pictures: say so honestly. As an ANSWER, not a bare message — a
+      // message with no answer is styled as a failure in the panel.
+      const reply = pictureReply(pic.subject, failed)
       return done({ message: 'No picture can be made from text — here is what works.', answer: reply, blocks: toAnswerBlocks(reply) })
     }
     if (pic?.kind === 'svg') {

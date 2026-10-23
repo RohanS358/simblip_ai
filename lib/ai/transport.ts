@@ -83,6 +83,14 @@ async function readSse(res: Response, onEvent: (e: AiEvent) => void): Promise<vo
   }
 }
 
+/** Real pictures, through our own /api/images (the browser may not call Wikimedia
+ *  directly, and Wikimedia wants a User-Agent a browser cannot send). */
+async function fetchImages(subject: string, want: 'photo' | 'diagram', signal: AbortSignal) {
+  const res = await fetch(`/api/images?q=${encodeURIComponent(subject)}&want=${want}`, { signal })
+  if (!res.ok) throw new Error(`image search ${res.status}`)
+  return ((await res.json()) as { images: import('@/lib/ai/image-search').ImageHit[] }).images
+}
+
 /** Run one request wherever it belongs, reporting events as they happen. Always
  *  ends with exactly one `done` unless the request is aborted (which throws). */
 export async function streamAi(req: AiRequest, signal: AbortSignal, onEvent: (e: AiEvent) => void): Promise<void> {
@@ -128,6 +136,7 @@ export async function streamAi(req: AiRequest, signal: AbortSignal, onEvent: (e:
       emit: onEvent,
       streaming: true,
       signal,
+      images: (subject, want) => fetchImages(subject, want, signal),
       act: makeAct({ engine: { chat: (r) => localEngine.chat({ ...r, signal }, route.tier) }, ctx: () => activeContext(signal), emit: onEvent, signal }),
     })
   } catch (e) {
