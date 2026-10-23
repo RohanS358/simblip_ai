@@ -14,7 +14,7 @@
 import { lintSimScript } from '@/lib/ai/simscript-lint'
 import { getEngine, runEngine } from '@/lib/steplab/registry'
 import { runCpp } from '@/lib/dsa/interpreter'
-import { capabilityPrompt, isComputing, matchLabs } from './catalog'
+import { capabilityPrompt, isComputing, isOtherLanguage, matchLabs } from './catalog'
 import { lintStoryboard, storyboardSchema, type Beat, type Storyboard } from './storyboard'
 import { circuitRecipe } from './recipes'
 import { parsePlan, planSystemPrompt, planUserPrompt, type Level, type Plan } from './plan'
@@ -155,7 +155,7 @@ export function buildLab(lab: { engine: string; settings?: Record<string, string
 }
 
 const NARRATE_SYSTEM = `You narrate a C++ program being executed step by step, to a student. For EACH step given, write ONE friendly sentence (at most 22 words) saying what is happening and why, using only the facts given. Reply with JSON only: {"lines":[{"step":<number>,"text":"..."}]} with exactly one entry per step, in order.`
-const FIX_SYSTEM = `You fix a C++ program so it compiles and runs in a small teaching interpreter (iostream, vector, stack, queue, unordered_map, string only; int main). Reply with the corrected program only, no commentary, no markdown fences.`
+const FIX_SYSTEM = `You fix a C++ program so it compiles and runs in a small teaching interpreter (iostream, vector, stack, queue, unordered_map, string only; int main; it has no input, so never use cin — hard-code the sample values). Reply with the corrected program only, no commentary, no markdown fences.`
 
 const lineOf = (source: string, n: number) => (source.split('\n')[n - 1] ?? '').trim()
 
@@ -207,7 +207,7 @@ export async function planTopic(llm: Llm, topic: string, level: Level, jsonSchem
 }
 
 
-const PROGRAM_SYSTEM = `You write ONE short C++ program that teaches a topic by running. Rules: under 30 lines, int main, only iostream, vector, stack, queue, unordered_map and string, small fixed inputs, print what matters with cout. Reply with the program only, no commentary, no markdown fences.`
+const PROGRAM_SYSTEM = `You write ONE short C++ program that teaches a topic by running. Rules: under 30 lines, int main, only iostream, vector, stack, queue, unordered_map and string, NEVER read input (no cin): put the sample values in the code. Print what matters with cout. Reply with the program only, no commentary, no markdown fences.`
 
 /** Decide, in code, what picture each step gets for a computing topic: the registry's stepper when the topic names one, else one
  *  C++ program for the DSA Lab; and no physics scene for any step of such a topic. The planner model is never trusted to remember. */
@@ -219,7 +219,7 @@ export async function routePlan(topic: string, plan: Plan, d: Pick<DirectorDeps,
   const slots = steps.length >= 4 ? [1, 3] : steps.length >= 2 ? [1, 0] : [0]
   if (labs.length) {
     labs.slice(0, slots.length).forEach((m, k) => { steps[slots[k]] = { ...steps[slots[k]], lab: { engine: m.cap.id, ...(Object.keys(m.settings).length ? { settings: m.settings } : {}) }, code: undefined } })
-  } else {
+  } else if (!isOtherLanguage(topic)) { // the DSA Lab runs C++ only: never pass off C++ as a lesson on another language
     try {
       const code = (await d.llm.complete(PROGRAM_SYSTEM, `Topic: ${topic}`, { signal: d.signal })).replace(/```[a-z+]*/gi, '').trim()
       if (code.includes('main') && code.length >= 20 && code.length <= 1800) steps[slots[0]] = { ...steps[slots[0]], code }
