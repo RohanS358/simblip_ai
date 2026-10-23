@@ -12,7 +12,7 @@
   },
   "scripts": {
     "test": "npm run test:ai && npm run test:server",
-    "test:ai": "node --experimental-strip-types --import ./scripts/test/register.mjs --test --test-force-exit lib/ai/*.test.mjs lib/tools/*.test.mjs lib/learning/*.test.mjs lib/circuit/floating.test.mjs lib/lesson/*.test.mjs lib/tts/*.test.mjs lib/frame/*.test.mjs lib/teacher/*.test.mjs lib/scene/rail-layout.test.mjs lib/scene/circuit-layout.test.mjs lib/sketch/*.test.mjs scripts/mcp/*.test.mjs",
+    "test:ai": "node --experimental-strip-types --import ./scripts/test/register.mjs --test --test-force-exit lib/ai/*.test.mjs lib/tools/*.test.mjs lib/learning/*.test.mjs lib/circuit/floating.test.mjs lib/lesson/*.test.mjs lib/tts/*.test.mjs lib/frame/*.test.mjs lib/teacher/*.test.mjs lib/scene/rail-layout.test.mjs lib/scene/circuit-layout.test.mjs lib/sketch/*.test.mjs lib/sketch/photo/*.test.mjs scripts/mcp/*.test.mjs",
     "test:server": "node --test ai-server/server.test.mjs",
     "typecheck": "tsc --noEmit",
     "ai-server": "node ai-server/server.mjs",
@@ -36,7 +36,8 @@
     "sketch:debug-scenes": "node --experimental-strip-types --import ./scripts/test/register.mjs scripts/ai/sketch/debug-scenes.mjs",
     "sketch:synth-chars": "node --experimental-strip-types --import ./scripts/test/register.mjs scripts/ai/sketch/synth-chars.mjs",
     "sketch:eval-mech": "node --experimental-strip-types --import ./scripts/test/register.mjs scripts/ai/sketch/eval-mech.mjs",
-    "sketch:eval-optics": "node --experimental-strip-types --import ./scripts/test/register.mjs scripts/ai/sketch/eval-optics.mjs"
+    "sketch:eval-optics": "node --experimental-strip-types --import ./scripts/test/register.mjs scripts/ai/sketch/eval-optics.mjs",
+    "sketch:eval-photo": "node --experimental-strip-types --import ./scripts/test/register.mjs scripts/ai/sketch/eval-photo.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",
