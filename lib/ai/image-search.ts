@@ -87,8 +87,8 @@ export function parseCommons(json: unknown, max = 30): ImageHit[] {
   const pages = (json as { query?: { pages?: Record<string, CommonsPage> } })?.query?.pages
   if (!pages || typeof pages !== 'object') return []
   const out: ImageHit[] = []
-  for (const p of Object.values(pages).sort((a, b) => (a.index ?? 0) - (b.index ?? 0))) {
-    const i = p.imageinfo?.[0]
+  for (const p of Object.values(pages).sort((a, b) => (a?.index ?? 0) - (b?.index ?? 0))) {
+    const i = p && typeof p === 'object' ? p.imageinfo?.[0] : undefined
     if (!i?.thumburl || !i.descriptionurl) continue
     // Low-resolution originals are dropped here, so nothing downstream can show one.
     if (!isHighRes(i.width, i.height, i.mime)) continue
@@ -106,7 +106,7 @@ export function parseCommons(json: unknown, max = 30): ImageHit[] {
     const licence = text(i.extmetadata?.LicenseShortName?.value)
     out.push({
       src: i.thumburl,
-      alt: titleToAlt(p.title ?? 'image'),
+      alt: titleToAlt(p?.title ?? 'image'),
       href: i.descriptionurl,
       credit: [artist.slice(0, 60), licence].filter(Boolean).join(' · ') || 'Wikimedia Commons',
       ...(i.thumbwidth && i.thumbheight ? { ratio: +(i.thumbwidth / i.thumbheight).toFixed(2) } : {}),
