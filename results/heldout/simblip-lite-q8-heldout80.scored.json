@@ -1,0 +1,937 @@
+[
+ {
+  "prompt": "Make a low-pass filter.",
+  "recipe": "rc-lowpass",
+  "total": 98.8,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9703703703703703,
+  "teaches": 1,
+  "issues": [
+   "parts are not lined up on shared rows/columns"
+  ]
+ },
+ {
+  "prompt": "quick one: draw two bulbs in parallel on a 12 V battery with an ammeter and let me play with the numbers.",
+  "recipe": "bulbs",
+  "total": 91.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9416296296296297,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "Set up a classroom demo of a 4 kg mass hanging from a spring with k = 80 N/m and plot its height.",
+  "recipe": "spring-mass",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "Create a first-order RC filter on a 10 V AC source so I can experiment with it.",
+  "recipe": "rc-lowpass",
+  "total": 98.8,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9703703703703703,
+  "teaches": 1,
+  "issues": [
+   "parts are not lined up on shared rows/columns"
+  ]
+ },
+ {
+  "prompt": "Show me a parallel bank of 3 resistors (47 Ω, 220 Ω, 330 Ω).",
+  "recipe": "parallel",
+  "total": 90.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9155555555555556,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "Two bulbs in series on a 6 V battery with a switch.",
+  "recipe": "bulbs",
+  "total": 93.6,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "i want to see a parallel circuit",
+  "recipe": "parallel",
+  "total": 90.7,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.925530864197531,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "I want to see a simple pendulum with a 1.5 kg bob, plotting its angle.",
+  "recipe": "pendulum",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "Does a heavier swing go back and forth faster? Show me.",
+  "recipe": "pendulum",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "Create a 1 kg mass hanging from a spring with k = 15 N/m and plot its height so I can experiment with it.",
+  "recipe": "spring-mass",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "Create a AND gate so I can experiment with it.",
+  "recipe": "gate",
+  "total": 89.7,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9185185185185184,
+  "teaches": 0.7647058823529411,
+  "issues": [
+   "1 wire kink sideways",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "ok so draw a parallel circuit and let me play with the numbers.",
+  "recipe": "parallel",
+  "total": 90.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9155555555555556,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "Can you set up a magnetic field bending a moving charge?",
+  "recipe": "charge-b",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "why do both bulbs go out when one is removed",
+  "recipe": "bulbs",
+  "total": 93.6,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "Make a voltage divider on a 5 V supply with R1 = 1 kΩ and R2 = 1 kΩ, measuring the output.",
+  "recipe": "divider",
+  "total": 92.2,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9638518518518518,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "Draw a parallel bank of 4 resistors (470 Ω, 470 Ω, 1 kΩ, 100 Ω) and let me play with the numbers.",
+  "recipe": "parallel",
+  "total": 90.7,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.925530864197531,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "simulate a charged particle entering a magnetic field showing its circular path",
+  "recipe": "charge-b",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "Simulate RC charging with a switch.",
+  "recipe": "rc-charge",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "I want to see a half adder with two inputs.",
+  "recipe": "half-adder",
+  "total": 87.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.8601158279252944,
+  "teaches": 0.7647058823529411,
+  "issues": [
+   "4 wires kink sideways",
+   "the scene is very wide (6.4:1)",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "Create a simple pendulum with a 4 kg bob, plotting its angle so I can experiment with it.",
+  "recipe": "pendulum",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "Draw a mixed series and parallel circuit and let me play with the numbers.",
+  "recipe": "series-parallel",
+  "total": 91.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9416296296296297,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "Create a circuit that adds two bits so I can experiment with it.",
+  "recipe": "half-adder",
+  "total": 87.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.8601158279252944,
+  "teaches": 0.7647058823529411,
+  "issues": [
+   "4 wires kink sideways",
+   "the scene is very wide (6.4:1)",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "A simple pendulum with a 1 kg bob, plotting its angle.",
+  "recipe": "pendulum",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "A collision between two blocks.",
+  "recipe": "collision",
+  "total": 98.8,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9703703703703703,
+  "teaches": 1,
+  "issues": [
+   "parts are not lined up on shared rows/columns"
+  ]
+ },
+ {
+  "prompt": "How does a computer add 1 + 1? Show me.",
+  "recipe": "half-adder",
+  "total": 87.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.8601158279252944,
+  "teaches": 0.7647058823529411,
+  "issues": [
+   "4 wires kink sideways",
+   "the scene is very wide (6.4:1)",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "Create a circuit with a resistor in series with two parallel resistors so I can experiment with it.",
+  "recipe": "series-parallel",
+  "total": 91.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9416296296296297,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "how do you turn ac into dc with a diode? show me",
+  "recipe": "rectifier",
+  "total": 98.8,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9703703703703703,
+  "teaches": 1,
+  "issues": [
+   "parts are not lined up on shared rows/columns"
+  ]
+ },
+ {
+  "prompt": "Set up a classroom demo of a series lighting circuit.",
+  "recipe": "bulbs",
+  "total": 93.6,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "Show me a magnetic field bending a moving charge.",
+  "recipe": "charge-b",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "Draw a parallel lighting circuit and let me play with the numbers.",
+  "recipe": "bulbs",
+  "total": 91.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9416296296296297,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "Why does a block slide down a slope slower when it is rough? Show me.",
+  "recipe": "incline",
+  "total": 92,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.8666666666666667,
+  "teaches": 0.9117647058823529,
+  "issues": [
+   "ramp overlaps Block",
+   "parts are not lined up on shared rows/columns",
+   "parts are not named (R1, R2, Vin…)"
+  ]
+ },
+ {
+  "prompt": "Draw a pendulum with a rod of length 0.18 m and let me play with the numbers.",
+  "recipe": "pendulum",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "Set up a classroom demo of a 4 kg mass hanging from a spring with k = 80 N/m and plot its height.",
+  "recipe": "spring-mass",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "Why does a magnet bend the path of a moving charge?",
+  "recipe": "charge-b",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "Simulate a ball thrown through the air.",
+  "recipe": "projectile",
+  "total": 99.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9822222222222223,
+  "teaches": 1,
+  "issues": [
+   "1 object(s) fall outside the page"
+  ]
+ },
+ {
+  "prompt": "Simulate a circuit that adds two bits.",
+  "recipe": "half-adder",
+  "total": 87.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.8601158279252944,
+  "teaches": 0.7647058823529411,
+  "issues": [
+   "4 wires kink sideways",
+   "the scene is very wide (6.4:1)",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "Can you set up a diode, a 2.2 kΩ load and an AC source, then smooth it?",
+  "recipe": "rectifier",
+  "total": 97.7,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9416296296296297,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "I want to see a simple pendulum with a 1 kg bob, plotting its angle.",
+  "recipe": "pendulum",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "Draw two bulbs in series on a 6 V battery with a switch and let me play with the numbers.",
+  "recipe": "bulbs",
+  "total": 93.6,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "Set up a classroom demo of a pendulum.",
+  "recipe": "pendulum",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "Set up a classroom demo of a half adder with two inputs.",
+  "recipe": "half-adder",
+  "total": 87.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.8601158279252944,
+  "teaches": 0.7647058823529411,
+  "issues": [
+   "4 wires kink sideways",
+   "the scene is very wide (6.4:1)",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "Make an RC low-pass filter with 4.7 kΩ and 10 µF driven at 1000 Hz plotting the output across the capacitor.",
+  "recipe": "rc-lowpass",
+  "total": 98.8,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9703703703703703,
+  "teaches": 1,
+  "issues": [
+   "parts are not lined up on shared rows/columns"
+  ]
+ },
+ {
+  "prompt": "An inclined plane.",
+  "recipe": "incline",
+  "total": 93.8,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9111111111111111,
+  "teaches": 0.9117647058823529,
+  "issues": [
+   "parts are not lined up on shared rows/columns",
+   "parts are not named (R1, R2, Vin…)"
+  ]
+ },
+ {
+  "prompt": "i want to see a simple pendulum with a 5 kg bob, plotting its angle",
+  "recipe": "pendulum",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "Show me an inductor and a resistor in series.",
+  "recipe": "rl",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "Make a pendulum with a rod of length 0.15 m.",
+  "recipe": "pendulum",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "Create projectile motion: a ball launched at 9 m/s and 70 degrees with its trail so I can experiment with it.",
+  "recipe": "projectile",
+  "total": 99.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9822222222222223,
+  "teaches": 1,
+  "issues": [
+   "1 object(s) fall outside the page"
+  ]
+ },
+ {
+  "prompt": "Show me a pendulum with a rod of length 0.3 m.",
+  "recipe": "pendulum",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "Help me understand a AND gate with two inputs and a truth table — build it so I can watch it.",
+  "recipe": "gate",
+  "total": 89.7,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9185185185185184,
+  "teaches": 0.7647058823529411,
+  "issues": [
+   "1 wire kink sideways",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "Show me projectile motion: a ball launched at 10 m/s and 45 degrees with its trail.",
+  "recipe": "projectile",
+  "total": 99.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9822222222222223,
+  "teaches": 1,
+  "issues": [
+   "1 object(s) fall outside the page"
+  ]
+ },
+ {
+  "prompt": "Simulate a potential divider with 1 kΩ and 1 kΩ and a voltmeter across the second resistor.",
+  "recipe": "divider",
+  "total": 92.2,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9638518518518518,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "Set up a classroom demo of a half adder with two inputs.",
+  "recipe": "half-adder",
+  "total": 87.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.8601158279252944,
+  "teaches": 0.7647058823529411,
+  "issues": [
+   "4 wires kink sideways",
+   "the scene is very wide (6.4:1)",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "Make two bulbs in parallel on a 9 V battery with an ammeter.",
+  "recipe": "bulbs",
+  "total": 91.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9416296296296297,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "Make a potential divider with 10 kΩ and 2.2 kΩ and a voltmeter across the second resistor.",
+  "recipe": "divider",
+  "total": 92.2,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9638518518518518,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "Show me an inclined plane.",
+  "recipe": "incline",
+  "total": 93.8,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9111111111111111,
+  "teaches": 0.9117647058823529,
+  "issues": [
+   "parts are not lined up on shared rows/columns",
+   "parts are not named (R1, R2, Vin…)"
+  ]
+ },
+ {
+  "prompt": "Simulate a 8 kg ball dropped from a height onto the ground plotting height and speed.",
+  "recipe": "free-fall",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "A parallel bank of 3 resistors (560 Ω, 330 Ω, 1 kΩ).",
+  "recipe": "parallel",
+  "total": 90.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9155555555555556,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "Show me a half adder with two inputs.",
+  "recipe": "half-adder",
+  "total": 87.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.8601158279252944,
+  "teaches": 0.7647058823529411,
+  "issues": [
+   "4 wires kink sideways",
+   "the scene is very wide (6.4:1)",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "Simulate a low-pass filter.",
+  "recipe": "rc-lowpass",
+  "total": 98.8,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9703703703703703,
+  "teaches": 1,
+  "issues": [
+   "parts are not lined up on shared rows/columns"
+  ]
+ },
+ {
+  "prompt": "Build a collision between two blocks.",
+  "recipe": "collision",
+  "total": 98.8,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9703703703703703,
+  "teaches": 1,
+  "issues": [
+   "parts are not lined up on shared rows/columns"
+  ]
+ },
+ {
+  "prompt": "Why does adding more branches make the battery work harder? Show me a parallel circuit.",
+  "recipe": "parallel",
+  "total": 90.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9155555555555556,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "Build a parallel lighting circuit.",
+  "recipe": "bulbs",
+  "total": 91.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9416296296296297,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "Show me a first-order RC filter on a 10 V AC source.",
+  "recipe": "rc-lowpass",
+  "total": 98.8,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9703703703703703,
+  "teaches": 1,
+  "issues": [
+   "parts are not lined up on shared rows/columns"
+  ]
+ },
+ {
+  "prompt": "simulate a parallel circuit",
+  "recipe": "parallel",
+  "total": 90.7,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.925530864197531,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "Help me understand a half adder with two inputs — build it so I can watch it.",
+  "recipe": "half-adder",
+  "total": 87.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.8601158279252944,
+  "teaches": 0.7647058823529411,
+  "issues": [
+   "4 wires kink sideways",
+   "the scene is very wide (6.4:1)",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "quick one: draw a pendulum and let me play with the numbers.",
+  "recipe": "pendulum",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "Draw projectile motion: a ball launched at 7 m/s and 20 degrees with its trail and let me play with the numbers.",
+  "recipe": "projectile",
+  "total": 99.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9822222222222223,
+  "teaches": 1,
+  "issues": [
+   "1 object(s) fall outside the page"
+  ]
+ },
+ {
+  "prompt": "Build a pendulum with a rod of length 0.14 m.",
+  "recipe": "pendulum",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "Make 3 resistors in parallel across a 24 V battery with an ammeter for the total current.",
+  "recipe": "parallel",
+  "total": 91.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9416296296296297,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "Draw a half adder with two inputs and let me play with the numbers.",
+  "recipe": "half-adder",
+  "total": 87.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.8601158279252944,
+  "teaches": 0.7647058823529411,
+  "issues": [
+   "4 wires kink sideways",
+   "the scene is very wide (6.4:1)",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "Make a collision between two blocks.",
+  "recipe": "collision",
+  "total": 98.8,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9703703703703703,
+  "teaches": 1,
+  "issues": [
+   "parts are not lined up on shared rows/columns"
+  ]
+ },
+ {
+  "prompt": "An RC circuit charging a 47 µF capacitor through 4.7 kΩ from a 5 V battery and plot the capacitor voltage.",
+  "recipe": "rc-charge",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "Draw a circuit that adds two bits and let me play with the numbers.",
+  "recipe": "half-adder",
+  "total": 87.3,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.8601158279252944,
+  "teaches": 0.7647058823529411,
+  "issues": [
+   "4 wires kink sideways",
+   "the scene is very wide (6.4:1)",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "show me a and gate with two inputs and a truth table",
+  "recipe": "gate",
+  "total": 89.7,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9185185185185184,
+  "teaches": 0.7647058823529411,
+  "issues": [
+   "1 wire kink sideways",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "Simulate an RC low-pass filter with 10 kΩ and 10 µF driven at 50 Hz plotting the output across the capacitor.",
+  "recipe": "rc-lowpass",
+  "total": 98.8,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.9703703703703703,
+  "teaches": 1,
+  "issues": [
+   "parts are not lined up on shared rows/columns"
+  ]
+ },
+ {
+  "prompt": "Can you set up a falling ball?",
+  "recipe": "free-fall",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ },
+ {
+  "prompt": "Can you set up a series lighting circuit?",
+  "recipe": "bulbs",
+  "total": 93.6,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "why does adding more branches make the battery work harder? show me a parallel circuit",
+  "recipe": "parallel",
+  "total": 90.7,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.925530864197531,
+  "teaches": 0.788235294117647,
+  "issues": [
+   "the plot shows no change"
+  ]
+ },
+ {
+  "prompt": "A AND gate with two inputs and a truth table.",
+  "recipe": "gate",
+  "total": 0,
+  "valid": 0,
+  "f": 0,
+  "looks": 0,
+  "teaches": 0,
+  "issues": [
+   "lint: syntax: Unexpected number"
+  ]
+ },
+ {
+  "prompt": "Simulate a 8 kg ball dropped from a height onto the ground plotting height and speed.",
+  "recipe": "free-fall",
+  "total": 100,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 1,
+  "issues": []
+ }
+]

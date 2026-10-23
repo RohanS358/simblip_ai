@@ -1,0 +1,129 @@
+{
+ "n": 30,
+ "schema_valid": 1.0,
+ "tool_correct": 1.0,
+ "args_correct": 0.7333333333333333,
+ "tok_per_s": 77.93571857049638,
+ "fails": [
+  {
+   "user": "give me a hint",
+   "want": {
+    "name": "learn.hint",
+    "arguments": {
+     "questionId": "q3"
+    }
+   },
+   "got": {
+    "name": "learn.hint",
+    "arguments": {
+     "questionId": "q1"
+    }
+   }
+  },
+  {
+   "user": "give me a hint",
+   "want": {
+    "name": "learn.hint",
+    "arguments": {
+     "questionId": "q2"
+    }
+   },
+   "got": {
+    "name": "learn.hint",
+    "arguments": {
+     "questionId": "q1"
+    }
+   }
+  },
+  {
+   "user": "give me a hint",
+   "want": {
+    "name": "learn.hint",
+    "arguments": {
+     "questionId": "q4"
+    }
+   },
+   "got": {
+    "name": "learn.hint",
+    "arguments": {
+     "questionId": "q1"
+    }
+   }
+  },
+  {
+   "user": "give me a hint",
+   "want": {
+    "name": "learn.hint",
+    "arguments": {
+     "questionId": "q6"
+    }
+   },
+   "got": {
+    "name": "learn.hint",
+    "arguments": {
+     "questionId": "q1"
+    }
+   }
+  },
+  {
+   "user": "give me a hint",
+   "want": {
+    "name": "learn.hint",
+    "arguments": {
+     "questionId": "q7"
+    }
+   },
+   "got": {
+    "name": "learn.hint",
+    "arguments": {
+     "questionId": "q1"
+    }
+   }
+  },
+  {
+   "user": "give me a hint",
+   "want": {
+    "name": "learn.hint",
+    "arguments": {
+     "questionId": "q8"
+    }
+   },
+   "got": {
+    "name": "learn.hint",
+    "arguments": {
+     "questionId": "q1"
+    }
+   }
+  },
+  {
+   "user": "give me a hint",
+   "want": {
+    "name": "learn.hint",
+    "arguments": {
+     "questionId": "q5"
+    }
+   },
+   "got": {
+    "name": "learn.hint",
+    "arguments": {
+     "questionId": "q1"
+    }
+   }
+  },
+  {
+   "user": "give me a hint",
+   "want": {
+    "name": "learn.hint",
+    "arguments": {
+     "questionId": "q9"
+    }
+   },
+   "got": {
+    "name": "learn.hint",
+    "arguments": {
+     "questionId": "q1"
+    }
+   }
+  }
+ ]
+}
