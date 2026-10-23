@@ -55,6 +55,11 @@ const PICTURE_RES: { re: RegExp; maxWords: number; explicit?: boolean }[] = [
   { re: /\b(?:show(?:\s+me)?|i\s+(?:want|need|wanna)\s+to\s+see|let\s+me\s+see|can\s+i\s+see)\s+(?:an?\s+|the\s+)?(.+?)\s*[.?!]*$/i, maxWords: 3 },
 ]
 
+/** Abstract or programming words ANYWHERE in the subject: "show a python loop
+ *  example" is a request for code, not for pictures of a python. */
+const ABSTRACT_ANYWHERE_RE =
+  /\b(?:examples?|code|program|programs|function|script|loop|algorithm|method|ways?|tips?|ideas?|steps?|answers?|solutions?|proof|derivation|summary|explanation|difference|meaning|definition|demo|tutorial|python|java|javascript|typescript|sql|html|css|c\+\+|rust|golang|regex|bug|error|api|app|website)\b/i
+
 /** A "subject" that is really a question or an abstract thing is not something
  *  with a photograph. */
 const NOT_A_SUBJECT_RE =
@@ -96,6 +101,9 @@ export function classifyPicture(prompt: string, lastPrompt?: string): PictureAsk
       const s = clean(m[1])
       if (s.length < 2 || s.split(' ').length > maxWords) continue
       if (BUILDABLE_RE.test(s) || NOT_A_SUBJECT_RE.test(s)) continue
+      // With an explicit picture word ("pictures of a python") the subject is whatever
+      // they say; without one ("show a python loop example") be strict.
+      if (!explicit && ABSTRACT_ANYWHERE_RE.test(s)) continue
       return s
     }
     return null
