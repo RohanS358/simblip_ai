@@ -1,0 +1,59 @@
+{
+  "name": "simblip-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The AI layer of SIMBLIP: a fine-tuned small model, a verified generation pipeline, a permission-gated tool-calling agent and a simulator-grounded lesson director. Built for Frogtoberfest.",
+  "author": {
+    "name": "Rohan Singh"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.6"
+  },
+  "scripts": {
+    "test": "npm run test:ai && npm run test:server",
+    "test:ai": "node --experimental-strip-types --import ./scripts/test/register.mjs --test --test-force-exit lib/ai/*.test.mjs lib/tools/*.test.mjs lib/learning/*.test.mjs lib/circuit/floating.test.mjs lib/lesson/*.test.mjs lib/tts/*.test.mjs lib/frame/*.test.mjs lib/teacher/*.test.mjs lib/scene/rail-layout.test.mjs lib/scene/circuit-layout.test.mjs lib/sketch/*.test.mjs scripts/mcp/*.test.mjs",
+    "test:server": "node --test ai-server/server.test.mjs",
+    "typecheck": "tsc --noEmit",
+    "ai-server": "node ai-server/server.mjs",
+    "ai-tts": ".cache/tts-venv/bin/python ai-server/tts/tts_server.py",
+    "mcp": "node scripts/mcp/simblip-mcp.mjs",
+    "data:build": "node scripts/ai/data/build-dataset.mjs",
+    "data:tools": "node scripts/ai/data/tools-dataset.mjs",
+    "eval:score": "node scripts/ai/eval/score-jsonl.mjs",
+    "eval:quality": "node scripts/ai/quality/evaluate.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "@wllama/wllama": "^3.8.1",
+    "html2canvas-pro": "^2.2.4",
+    "ioredis": "^6.0.0",
+    "jszip": "^3.10.1",
+    "katex": "^0.17.0",
+    "mathjs": "^15.2.0",
+    "matter-js": "^0.20.0",
+    "pdfjs-dist": "^6.1.200",
+    "poly-decomp": "^0.3.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "sonner": "^1.7.4",
+    "tesseract.js": "^7.0.0",
+    "ws": "^8.22.0",
+    "xlsx": "^0.18.5",
+    "zod": "3.25.76",
+    "zod-to-json-schema": "^3.25.2",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@types/matter-js": "^0.20.2",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
+    "docx": "^9.7.1",
+    "jspdf": "^4.2.1",
+    "pptxgenjs": "^4.0.1",
+    "sharp": "^0.34.5",
+    "typescript": "^5"
+  }
+}

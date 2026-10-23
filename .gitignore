@@ -1,0 +1,11 @@
+node_modules/
+.cache/
+.env*
+!.env.example
+*.tsbuildinfo
+*.gguf
+*.safetensors
+__pycache__/
+.venv/
+.DS_Store
+*.traineddata
