@@ -27,7 +27,7 @@ export function loadConfig(env = process.env) {
   return {
     port: Number(env.AI_SERVER_PORT ?? 8787),
     host: env.AI_SERVER_HOST ?? '127.0.0.1', // put a tunnel (Tailscale / cloudflared) in front; do not bind 0.0.0.0 bare
-    key: env.AI_SERVER_KEY ?? '',
+    key: env.AI_SERVER_KEY ?? env.OLLAMA_API_KEY ?? '', // same secret the app sends, so one .env.local serves both
     upstream: env.OLLAMA_UPSTREAM ?? 'http://127.0.0.1:11434',
     concurrency: Number(env.AI_SERVER_CONCURRENCY ?? 1), // one 8 GB GPU: 1 keeps latency predictable
     maxQueue: Number(env.AI_SERVER_MAX_QUEUE ?? 8),
