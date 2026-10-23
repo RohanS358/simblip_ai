@@ -1,127 +1,141 @@
 {
-  "domain": "circuit",
-  "nodes": [
-    {
-      "id": "b",
-      "cls": "battery",
-      "conf": 0.95,
-      "bbox": [
-        40,
-        60,
-        60,
-        30
-      ],
-      "rot": 0,
-      "values": {
-        "V": "9"
+  "name": "mosfet-switch",
+  "description": "NMOS driven by a 5 V gate supply switches a 1k load.",
+  "ir": {
+    "domain": "circuit",
+    "nodes": [
+      {
+        "id": "b1",
+        "cls": "battery",
+        "conf": 1,
+        "bbox": [
+          40,
+          40,
+          60,
+          30
+        ],
+        "rot": 0,
+        "values": {
+          "V": "5"
+        },
+        "source": "ink"
       },
-      "source": "ink"
-    },
-    {
-      "id": "q",
-      "cls": "mosfet",
-      "conf": 0.95,
-      "bbox": [
-        130,
-        60,
-        60,
-        30
-      ],
-      "rot": 0,
-      "source": "ink"
-    },
-    {
-      "id": "l",
-      "cls": "bulb",
-      "conf": 0.95,
-      "bbox": [
-        220,
-        60,
-        60,
-        30
-      ],
-      "rot": 0,
-      "source": "ink"
-    },
-    {
-      "id": "v",
-      "cls": "battery",
-      "conf": 0.95,
-      "bbox": [
-        310,
-        60,
-        60,
-        30
-      ],
-      "rot": 0,
-      "values": {
-        "V": "5"
+      {
+        "id": "b2",
+        "cls": "battery",
+        "conf": 1,
+        "bbox": [
+          150,
+          40,
+          60,
+          30
+        ],
+        "rot": 0,
+        "values": {
+          "V": "5"
+        },
+        "source": "ink"
       },
-      "source": "ink"
+      {
+        "id": "rd",
+        "cls": "resistor",
+        "conf": 1,
+        "bbox": [
+          260,
+          40,
+          60,
+          30
+        ],
+        "rot": 0,
+        "values": {
+          "R": "1k"
+        },
+        "source": "ink"
+      },
+      {
+        "id": "m1",
+        "cls": "mosfet",
+        "conf": 1,
+        "bbox": [
+          370,
+          40,
+          60,
+          30
+        ],
+        "rot": 0,
+        "source": "ink"
+      }
+    ],
+    "edges": [
+      {
+        "a": {
+          "node": "b2",
+          "pin": "positive"
+        },
+        "b": {
+          "node": "m1",
+          "pin": "gate"
+        },
+        "kind": "wire",
+        "conf": 1
+      },
+      {
+        "a": {
+          "node": "b2",
+          "pin": "negative"
+        },
+        "b": {
+          "node": "b1",
+          "pin": "negative"
+        },
+        "kind": "wire",
+        "conf": 1
+      },
+      {
+        "a": {
+          "node": "b1",
+          "pin": "positive"
+        },
+        "b": {
+          "node": "rd",
+          "pin": "a"
+        },
+        "kind": "wire",
+        "conf": 1
+      },
+      {
+        "a": {
+          "node": "rd",
+          "pin": "b"
+        },
+        "b": {
+          "node": "m1",
+          "pin": "drain"
+        },
+        "kind": "wire",
+        "conf": 1
+      },
+      {
+        "a": {
+          "node": "m1",
+          "pin": "source"
+        },
+        "b": {
+          "node": "b1",
+          "pin": "negative"
+        },
+        "kind": "wire",
+        "conf": 1
+      }
+    ],
+    "labels": [],
+    "doubts": []
+  },
+  "expect": [
+    {
+      "part": "rd",
+      "channel": "I",
+      "min": 0.001
     }
-  ],
-  "edges": [
-    {
-      "a": {
-        "node": "b",
-        "pin": "positive"
-      },
-      "b": {
-        "node": "l",
-        "pin": "a"
-      },
-      "kind": "wire",
-      "conf": 0.95
-    },
-    {
-      "a": {
-        "node": "l",
-        "pin": "b"
-      },
-      "b": {
-        "node": "q",
-        "pin": "drain"
-      },
-      "kind": "wire",
-      "conf": 0.95
-    },
-    {
-      "a": {
-        "node": "q",
-        "pin": "source"
-      },
-      "b": {
-        "node": "b",
-        "pin": "negative"
-      },
-      "kind": "wire",
-      "conf": 0.95
-    },
-    {
-      "a": {
-        "node": "v",
-        "pin": "positive"
-      },
-      "b": {
-        "node": "q",
-        "pin": "gate"
-      },
-      "kind": "wire",
-      "conf": 0.95
-    },
-    {
-      "a": {
-        "node": "v",
-        "pin": "negative"
-      },
-      "b": {
-        "node": "b",
-        "pin": "negative"
-      },
-      "kind": "wire",
-      "conf": 0.95
-    }
-  ],
-  "labels": [],
-  "doubts": []
+  ]
 }

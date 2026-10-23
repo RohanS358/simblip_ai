@@ -1,90 +1,101 @@
 {
-  "domain": "circuit",
-  "nodes": [
-    {
-      "id": "b",
-      "cls": "battery",
-      "conf": 0.95,
-      "bbox": [
-        40,
-        60,
-        60,
-        30
-      ],
-      "rot": 0,
-      "values": {
-        "V": "9"
+  "name": "ammeter-series",
+  "description": "An ammeter in series reads the loop current: 6 V / 300 ohm = 20 mA.",
+  "ir": {
+    "domain": "circuit",
+    "nodes": [
+      {
+        "id": "b1",
+        "cls": "battery",
+        "conf": 1,
+        "bbox": [
+          40,
+          40,
+          60,
+          30
+        ],
+        "rot": 0,
+        "values": {
+          "V": "6"
+        },
+        "source": "ink"
       },
-      "source": "ink"
-    },
-    {
-      "id": "a",
-      "cls": "ammeter",
-      "conf": 0.95,
-      "bbox": [
-        130,
-        60,
-        60,
-        30
-      ],
-      "rot": 0,
-      "source": "ink"
-    },
-    {
-      "id": "r",
-      "cls": "resistor",
-      "conf": 0.95,
-      "bbox": [
-        220,
-        60,
-        60,
-        30
-      ],
-      "rot": 0,
-      "values": {
-        "R": "220"
+      {
+        "id": "r1",
+        "cls": "resistor",
+        "conf": 1,
+        "bbox": [
+          150,
+          40,
+          60,
+          30
+        ],
+        "rot": 0,
+        "values": {
+          "R": "300"
+        },
+        "source": "ink"
       },
-      "source": "ink"
+      {
+        "id": "am1",
+        "cls": "ammeter",
+        "conf": 1,
+        "bbox": [
+          260,
+          40,
+          60,
+          30
+        ],
+        "rot": 0,
+        "source": "ink"
+      }
+    ],
+    "edges": [
+      {
+        "a": {
+          "node": "b1",
+          "pin": "positive"
+        },
+        "b": {
+          "node": "r1",
+          "pin": "a"
+        },
+        "kind": "wire",
+        "conf": 1
+      },
+      {
+        "a": {
+          "node": "r1",
+          "pin": "b"
+        },
+        "b": {
+          "node": "am1",
+          "pin": "a"
+        },
+        "kind": "wire",
+        "conf": 1
+      },
+      {
+        "a": {
+          "node": "am1",
+          "pin": "b"
+        },
+        "b": {
+          "node": "b1",
+          "pin": "negative"
+        },
+        "kind": "wire",
+        "conf": 1
+      }
+    ],
+    "labels": [],
+    "doubts": []
+  },
+  "expect": [
+    {
+      "part": "am1",
+      "channel": "I",
+      "value": 0.02
     }
-  ],
-  "edges": [
-    {
-      "a": {
-        "node": "b",
-        "pin": "positive"
-      },
-      "b": {
-        "node": "a",
-        "pin": "a"
-      },
-      "kind": "wire",
-      "conf": 0.95
-    },
-    {
-      "a": {
-        "node": "a",
-        "pin": "b"
-      },
-      "b": {
-        "node": "r",
-        "pin": "a"
-      },
-      "kind": "wire",
-      "conf": 0.95
-    },
-    {
-      "a": {
-        "node": "r",
-        "pin": "b"
-      },
-      "b": {
-        "node": "b",
-        "pin": "negative"
-      },
-      "kind": "wire",
-      "conf": 0.95
-    }
-  ],
-  "labels": [],
-  "doubts": []
+  ]
 }

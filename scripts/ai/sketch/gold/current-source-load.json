@@ -1,65 +1,76 @@
 {
-  "domain": "circuit",
-  "nodes": [
-    {
-      "id": "i",
-      "cls": "current-source",
-      "conf": 0.95,
-      "bbox": [
-        40,
-        60,
-        60,
-        30
-      ],
-      "rot": 0,
-      "values": {
-        "I": "10m"
+  "name": "current-source-load",
+  "description": "A 10 mA source into 100 ohm → 1 V.",
+  "ir": {
+    "domain": "circuit",
+    "nodes": [
+      {
+        "id": "i1",
+        "cls": "current-source",
+        "conf": 1,
+        "bbox": [
+          40,
+          40,
+          60,
+          30
+        ],
+        "rot": 0,
+        "values": {
+          "I": "10m"
+        },
+        "source": "ink"
       },
-      "source": "ink"
-    },
-    {
-      "id": "r",
-      "cls": "resistor",
-      "conf": 0.95,
-      "bbox": [
-        130,
-        60,
-        60,
-        30
-      ],
-      "rot": 0,
-      "values": {
-        "R": "470"
+      {
+        "id": "r1",
+        "cls": "resistor",
+        "conf": 1,
+        "bbox": [
+          150,
+          40,
+          60,
+          30
+        ],
+        "rot": 0,
+        "values": {
+          "R": "100"
+        },
+        "source": "ink"
+      }
+    ],
+    "edges": [
+      {
+        "a": {
+          "node": "i1",
+          "pin": "positive"
+        },
+        "b": {
+          "node": "r1",
+          "pin": "a"
+        },
+        "kind": "wire",
+        "conf": 1
       },
-      "source": "ink"
+      {
+        "a": {
+          "node": "r1",
+          "pin": "b"
+        },
+        "b": {
+          "node": "i1",
+          "pin": "negative"
+        },
+        "kind": "wire",
+        "conf": 1
+      }
+    ],
+    "labels": [],
+    "doubts": []
+  },
+  "expect": [
+    {
+      "part": "r1",
+      "channel": "V",
+      "value": 1
     }
-  ],
-  "edges": [
-    {
-      "a": {
-        "node": "i",
-        "pin": "positive"
-      },
-      "b": {
-        "node": "r",
-        "pin": "a"
-      },
-      "kind": "wire",
-      "conf": 0.95
-    },
-    {
-      "a": {
-        "node": "r",
-        "pin": "b"
-      },
-      "b": {
-        "node": "i",
-        "pin": "negative"
-      },
-      "kind": "wire",
-      "conf": 0.95
-    }
-  ],
-  "labels": [],
-  "doubts": []
+  ]
 }
