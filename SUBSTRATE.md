@@ -48,3 +48,9 @@ Every other vendored file is byte-for-byte the main repository's.
 ## Changing it
 
 These are read-only snapshots. Fix bugs in the main SIMBLIP repository and re-vendor; do not diverge here.
+
+## Added when the sketch pipeline needed it
+
+| File | Why | Source |
+|---|---|---|
+| `lib/optics/engine.ts` | ray tracer; the optics compiler (`lib/sketch/compile-optics.ts`) and its tests trace rays through the compiled scene | SIMBLIP `fdb6f36` |
