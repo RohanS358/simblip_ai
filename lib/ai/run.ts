@@ -15,6 +15,7 @@ import { classifyIntent, type Intent } from '@/lib/ai/route-intent'
 import { generateEditPlan, EditFailedError } from '@/lib/ai/edit'
 import { explain, EXPLAIN_SYSTEM_PROMPT, toAnswerBlocks } from '@/lib/ai/explain'
 import { classifyPicture, pictureReply, sanitizeSvg, svgDataUri, SVG_SYSTEM_PROMPT } from '@/lib/ai/picture'
+import { CHAT_SYSTEM_PROMPT, CHAT_TOKENS, chatHistory, cleanChat, looksLikeCoursework } from '@/lib/ai/chat'
 import { IMAGES_SHOWN, selectImages, type ImageHit, type ImageWant } from '@/lib/ai/image-search'
 
 export const aiRequestSchema = z.object({
@@ -182,9 +183,19 @@ export function composePrompt(req: AiRequest): string {
   return withHistory(withPage, req.history)
 }
 
+/** The user's own words. With files attached, the panel wraps them as
+ *  "ATTACHED FILES … REQUEST: <what they typed>"; routing a chat or coursework
+ *  decision on the file's text would misread an essay as physics. */
+export function askOf(prompt: string): string {
+  const i = prompt.lastIndexOf('\nREQUEST: ')
+  return i >= 0 ? prompt.slice(i + '\nREQUEST: '.length) : prompt
+}
+
 export const pickIntent = (req: AiRequest): Intent =>
   !req.intent || req.intent === 'auto'
-    ? classifyIntent(req.prompt, Boolean(req.pageDigest), req.hasSelection ?? false)
+    ? // Route on what the user TYPED. An attached essay that mentions a "network" or a
+      // "block" must not turn "proofread this" into a simulation request.
+      classifyIntent(askOf(req.prompt), Boolean(req.pageDigest), req.hasSelection ?? false)
     : req.intent
 
 /** Run one request. Never throws: every outcome ends in exactly one `done`. */
@@ -297,6 +308,29 @@ export async function runAi(req: AiRequest, deps: RunDeps): Promise<void> {
               : `Edit failed: ${e instanceof Error ? e.message : String(e)}`,
         })
       }
+    }
+
+    // Conversation, not coursework: a general question, a request for writing,
+    // "hi". It gets the conversational assistant — the whole thread as real prior
+    // turns, no tutor format — instead of the derivation/numerical template.
+    if (intent === 'explain' && !looksLikeCoursework(askOf(req.prompt))) {
+      const generator = await deps.explain()
+      const raw = await generator.generate(
+        CHAT_SYSTEM_PROMPT,
+        composePrompt({ ...req, history: undefined }),
+        tok,
+        chatHistory(req.history),
+        CHAT_TOKENS
+      )
+      const reply = cleanChat(raw)
+      if (!reply) return done({ message: 'The model returned an empty answer. Try again, or rephrase the question.' })
+      return done({
+        // No status line: a chat reply speaks for itself. Only a long, structured
+        // one is offered for the notebook.
+        message: '',
+        answer: reply,
+        ...(reply.length >= 400 ? { blocks: toAnswerBlocks(reply) } : {}),
+      })
     }
 
     if (intent === 'explain') {
