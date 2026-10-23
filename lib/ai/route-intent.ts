@@ -124,9 +124,10 @@ const EXPLAIN_RE = new RegExp(
   'i'
 )
 
-/** Names something that can actually be built and run on the canvas. */
-const SIMULATE_RE = new RegExp(
-  [
+/** Technical vocabulary: things the canvas, the labs or the tutor actually
+ *  know about. Exported because the chat lane uses it too — a prompt with none
+ *  of these words is ordinary conversation, not coursework or a build order. */
+const TECH_TERMS = [
     // mechanics
     'pendulum|oscillat|spring|projectile|collision|bounce|bouncing|falling|free fall',
     'inclined plane|friction|damped|mass on|block|pulley|rotat',
@@ -160,11 +161,38 @@ const SIMULATE_RE = new RegExp(
     'bresenham|\\bdda\\b|clipping|b[eé]zier|rasteri|projection|phong|shading|normal form|functional dependenc|serializab|relational algebra',
     'monte carlo|queue simulation|m/m/1|markov|random number|bisection|newton.raphson|simpson|runge|euler method|central limit|confidence interval',
     'block diagram|sequence diagram|\\buml\\b|feedback loop|transfer function|\\bpid\\b|state machine|flowchart',
+]
+
+export const TECH_RE = new RegExp(TECH_TERMS.join('|'), 'i')
+
+/** Names something that can actually be built and run on the canvas. */
+const SIMULATE_RE = new RegExp(
+  [
+    ...TECH_TERMS,
     // explicit asks
     'simulate|simulation|animate|plot|graph|draw|build|show me',
   ].join('|'),
   'i'
 )
+
+/** Maths-shaped text: an equation, or a named function. */
+const MATHY_RE = /[=^]|\b(?:sin|sine|cos|cosine|tan|log|ln|sqrt|exp|derivative|integral|function|equation)\b/i
+
+/** Words that ask for something to be drawn, written up or presented. */
+const CANVAS_OR_DOC_RE =
+  /\b(?:simulat\w*|animat\w*|plot\w*|graph\w*|draw\w*|diagram|chart|scene|canvas|slides?|deck|presentation|notes?|summar\w*|report|essay|truth table|waveform)\b/i
+
+/**
+ * Is this just a conversation? True when the prompt has no technical
+ * vocabulary, no maths, and does not ask for a scene, a diagram or a document.
+ * "Help me plan my week", "write a poem about autumn" and "hi" are not build
+ * orders even though they open with a verb like "make" or "build" — sending
+ * them to the simulator produced a failed SimScript instead of an answer.
+ */
+export function isGeneralConversation(prompt: string): boolean {
+  const p = prompt.trim()
+  return !TECH_RE.test(p) && !MATHY_RE.test(p) && !CANVAS_OR_DOC_RE.test(p)
+}
 
 /** Verbs that only ever mean "put a scene on the canvas". When one of these
  *  leads the prompt there is nothing to explain — the user is asking for an
@@ -230,6 +258,8 @@ export function classifyIntent(prompt: string, hasContext = false, selected = fa
   // their page and asking for it to change, which neither a fresh scene nor a
   // derivation answers. Gated on context so this can never fire by accident.
   if (wantsEdit(p, hasContext, selected)) return 'edit'
+  // Ordinary conversation is answered, never built.
+  if (isGeneralConversation(p)) return 'explain'
   // A slide deck is written output, so it counts as a written artefact even
   // though "make me slides..." opens with a build verb. Same for "make me
   // notes/a summary on X" — but NOT "add a note" (a canvas object), which is
