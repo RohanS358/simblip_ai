@@ -87,7 +87,11 @@ node --test ai-server/server.test.mjs
 Expected: 7 passing, covering auth (`rejects missing and wrong keys, allows healthz`), lane aliasing (`alias maps to the real model…`), the bounded queue, the rate limit,
 and the fine-tuned lane swapping a ~1,000-token prompt for a one-line one.
 
-## 7. Read the code where the model's output is used
+## 7. Follow the data end to end
+
+[`docs/PIPELINE.md`](PIPELINE.md) traces a photographed question, a PDF and a live measurement from input to output, naming every file, agent and tool on the way.
+
+## 8. Read the code where the model's output is used
 
 Open [`docs/AI_USAGE_DISCLOSURE.md`](AI_USAGE_DISCLOSURE.md). Each of its 11 rows names a file and function; the five worth reading first:
 
@@ -99,14 +103,14 @@ Open [`docs/AI_USAGE_DISCLOSURE.md`](AI_USAGE_DISCLOSURE.md). Each of its 11 row
 | `verifySolution()` | [`lib/lesson/solve.ts`](../lib/lesson/solve.ts) | every worked line recomputed |
 | `verifyPlan()` → `applyPlan()` | [`lib/ai/edit-ops.ts`](../lib/ai/edit-ops.ts), [`apply-ops.ts`](../lib/ai/apply-ops.ts) | all-or-nothing edits, one undo |
 
-## 8. The model, and how it was made
+## 9. The model, and how it was made
 
 * Training data, gzipped: [`data/v5/`](../data/v5) (9,350 rows). The gate that filters it: [`scripts/ai/data/build-dataset.mjs`](../scripts/ai/data/build-dataset.mjs); its effect: [`data/dataset-build-report-v3.json`](../data/dataset-build-report-v3.json) (6,409 of 7,000 kept).
 * Training script and exact environment: [`scripts/ai/train/sft.py`](../scripts/ai/train/sft.py), [`requirements.txt`](../scripts/ai/train/requirements.txt). Loss curve: [`results/training/loss-qwen3-0.6b.csv`](../results/training/loss-qwen3-0.6b.csv) (1.70 → 0.023).
 * The adapter itself: [`models/simblip-lite-lora/`](../models/simblip-lite-lora) (81 MB, committed). The merged GGUFs and their SHA-256: [`models/README.md`](../models/README.md).
 * A model-size experiment that **did not** pay off, recorded rather than hidden: [`docs/ai/decisions.md`](ai/decisions.md), 2026-10-22.
 
-## 9. The history
+## 10. The history
 
 [`docs/HISTORY.md`](HISTORY.md) lists every feature branch in build order. `git log --first-parent --oneline` shows the same as a one-line-per-feature story; any branch can be checked out to see the code at that stage.
 
