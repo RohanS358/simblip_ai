@@ -13,7 +13,9 @@ import { generateSimScript, GenerationFailedError, GeneratorUnavailableError, ty
 import { SIMSCRIPT_SYSTEM_PROMPT } from '@/lib/ai/simscript-corpus'
 import { classifyIntent, type Intent } from '@/lib/ai/route-intent'
 import { generateEditPlan, EditFailedError } from '@/lib/ai/edit'
-import { explain, EXPLAIN_SYSTEM_PROMPT } from '@/lib/ai/explain'
+import { explain, EXPLAIN_SYSTEM_PROMPT, toAnswerBlocks } from '@/lib/ai/explain'
+import { classifyPicture, pictureReply, sanitizeSvg, svgDataUri, SVG_SYSTEM_PROMPT } from '@/lib/ai/picture'
+import { IMAGES_SHOWN, selectImages, type ImageHit, type ImageWant } from '@/lib/ai/image-search'
 
 export const aiRequestSchema = z.object({
   prompt: z.string().min(1).max(4000),
@@ -89,6 +91,13 @@ export interface RunDeps {
   script: () => Promise<SimScriptGenerator>
   explain: () => Promise<SimScriptGenerator>
   emit: (e: AiEvent) => void
+  /** Real pictures for a subject (Wikimedia Commons). Optional: a transport
+   *  with no network path to it simply falls back to the honest reply. */
+  images?: (subject: string, want: ImageWant) => Promise<ImageHit[]>
+  /** The user's Stop. When it has fired, a thrown error is the stop itself and
+   *  is re-thrown for the caller to show as "Stopped." — never wrapped into an
+   *  "AI pipeline error" message. */
+  signal?: AbortSignal
   /** Forward model tokens to `emit`? Off for the plain-JSON transport. */
   streaming: boolean
   /** The tool-using lane. Only the browser has tools, so only it passes this.
@@ -196,6 +205,58 @@ export async function runAi(req: AiRequest, deps: RunDeps): Promise<void> {
       const g = await deps.explain()
       return done({ message: await g.generate(req.rawSystem, req.prompt, undefined, undefined, 3600, req.rawFormat) })
     }
+    // A request for a PICTURE is answered honestly before anything else: a text
+    // model cannot make a photo, and ASCII art passed off as one is a wrong
+    // answer. No model call for the reply; code for a simple SVG is the one
+    // picture a text model can really write.
+    const pic = classifyPicture(req.prompt, req.history?.at(-1)?.prompt)
+    if (pic?.kind === 'photo') {
+      emit({ event: 'intent', data: 'explain' })
+      let found: ImageHit[] = []
+      let failed = false
+      if (deps.images) {
+        try {
+          found = await deps.images(pic.subject, pic.want)
+          // Four are always wanted. If this kind of picture cannot supply four
+          // high-resolution ones, top up from the other kind (photos <-> drawings).
+          if (selectImages(found).length < IMAGES_SHOWN) {
+            const more = await deps.images(pic.subject, pic.want === 'diagram' ? 'photo' : 'diagram').catch(() => [] as ImageHit[])
+            const seen = new Set(found.map((h) => h.src))
+            found = [...found, ...more.filter((h) => !seen.has(h.src))]
+          }
+        } catch {
+          failed = true
+        }
+      }
+      if (found.length) {
+        const shown = selectImages(found)
+        return done({
+          message:
+            shown.length === IMAGES_SHOWN
+              ? `Here are four high-resolution pictures of ${pic.subject} from Wikimedia Commons — the author and licence are under each.`
+              : `I could only find ${shown.length} high-resolution picture${shown.length === 1 ? '' : 's'} of ${pic.subject} on Wikimedia Commons — the author and licence are under ${shown.length === 1 ? 'it' : 'each'}.`,
+          images: shown.map(({ src, alt, href, credit }) => ({ src, alt, href, credit })),
+        })
+      }
+      // No pictures: say so honestly. As an ANSWER, not a bare message — a
+      // message with no answer is styled as a failure in the panel.
+      const reply = pictureReply(pic.subject, failed)
+      return done({ message: 'No picture can be made from text — here is what works.', answer: reply, blocks: toAnswerBlocks(reply) })
+    }
+    if (pic?.kind === 'svg') {
+      emit({ event: 'intent', data: 'explain' })
+      const raw = await (await deps.explain()).generate(SVG_SYSTEM_PROMPT, `Draw: ${pic.subject}`, undefined, undefined, 1200)
+      const out = sanitizeSvg(raw)
+      if ('error' in out) return done({ message: `${out.error} Try again, or upload a real image instead.` })
+      const markdown = `\`\`\`svg\n${out.svg}\n\`\`\`\n\n${out.note || 'Save this as a .svg file and open it in any browser.'}`
+      return done({
+        message: 'Here is the drawing and its SVG code. Add it to your notebook as a picture, or save the code as a .svg file.',
+        answer: markdown,
+        blocks: toAnswerBlocks(markdown),
+        images: [{ src: svgDataUri(out.svg), alt: `${pic.subject} (drawn as SVG)` }],
+      })
+    }
+
     // Tools first: "run it", "how fast is the ball?" have exact answers that
     // need no scene and no derivation.
     if (deps.act) {
@@ -240,6 +301,9 @@ export async function runAi(req: AiRequest, deps: RunDeps): Promise<void> {
 
     if (intent === 'explain') {
       const result = await runExplain(tok)
+      // A model that returns nothing is a failure to report, not an "answer":
+      // it used to surface as an empty reply under a red status line.
+      if (!result.markdown.trim()) return done({ message: 'The model returned an empty answer. Try again, or rephrase the question.' })
       return done({
         message: 'Answered — review it, then add it to your notebook.',
         answer: result.markdown,
@@ -281,6 +345,7 @@ export async function runAi(req: AiRequest, deps: RunDeps): Promise<void> {
       script: result.script,
     })
   } catch (e) {
+    if (deps.signal?.aborted) throw e
     done(errorResponse(e))
   }
 }

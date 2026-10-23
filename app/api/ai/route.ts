@@ -14,6 +14,7 @@ import { prewarm, pickGenerator } from '@/lib/ai/generate'
 import { withCache } from '@/lib/ai/cache'
 import { aiRequestSchema, runAi, type AiEvent } from '@/lib/ai/run'
 import { allowedModel, authorizeAi, MAX_AI_BODY_BYTES, takeAiSlot } from '@/lib/server/ai-guard'
+import { searchCommons } from '@/lib/ai/image-search'
 
 /**
  * The generator every lane runs through, memoized in Redis.
@@ -75,6 +76,7 @@ async function handle(req: Request, caller: { id: string; role: string }, releas
   const deps = (emit: (e: AiEvent) => void, streaming: boolean) => ({
     script: () => cachedGenerator('script', r.model, r.nocache),
     explain: () => cachedGenerator('explain', r.model, r.nocache),
+    images: (subject: string, want: 'photo' | 'diagram') => searchCommons(subject, want),
     emit,
     streaming,
   })
