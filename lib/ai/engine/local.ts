@@ -79,6 +79,9 @@ const stripThink = (s: string) => s.replace(/<think>[\s\S]*?<\/think>\s*/g, '').
  *  coming back costs seconds, not a download. */
 const IDLE_MS = 10 * 60_000
 
+/** How long a clean cancel gets before the model is shut down to stop it. */
+export const HARD_STOP_MS = 300
+
 export class LocalEngine {
   private w: WllamaLike | null = null
   private loaded: Tier | null = null
@@ -243,6 +246,19 @@ export class LocalEngine {
       await this.ensure(t, req.signal)
       const w = await this.instance()
       useEngine.getState().patch({ state: 'generating' })
+      // wllama only looks at the abort signal BETWEEN output chunks. While it is
+      // still reading a long prompt (minutes on a slow CPU) no chunk arrives, so
+      // Stop appeared to do nothing. Give a clean cancel a moment, then shut the
+      // model down: that ends the compute at once, and the next request reloads
+      // it from the browser cache in a few seconds.
+      let finished = false
+      const hardStop = () => {
+        setTimeout(() => {
+          if (!finished) void this.release()
+        }, HARD_STOP_MS)
+      }
+      if (req.signal?.aborted) hardStop()
+      else req.signal?.addEventListener('abort', hardStop, { once: true })
       try {
         const stream = await w.createChatCompletion({
           messages: req.messages,
@@ -301,6 +317,8 @@ export class LocalEngine {
         }
         throw new GeneratorUnavailableError(`On-device generation failed: ${msg}`)
       } finally {
+        finished = true
+        req.signal?.removeEventListener('abort', hardStop)
         this.touch()
         useEngine.getState().patch({ prefill: null, ...(useEngine.getState().state === 'generating' ? { state: 'ready' as const } : {}) })
       }
