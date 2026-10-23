@@ -127,6 +127,7 @@ export async function streamAi(req: AiRequest, signal: AbortSignal, onEvent: (e:
       explain: generator,
       emit: onEvent,
       streaming: true,
+      signal,
       act: makeAct({ engine: { chat: (r) => localEngine.chat({ ...r, signal }, route.tier) }, ctx: () => activeContext(signal), emit: onEvent, signal }),
     })
   } catch (e) {

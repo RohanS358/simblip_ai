@@ -89,6 +89,10 @@ export interface RunDeps {
   script: () => Promise<SimScriptGenerator>
   explain: () => Promise<SimScriptGenerator>
   emit: (e: AiEvent) => void
+  /** The user's Stop. When it has fired, a thrown error is the stop itself and
+   *  is re-thrown for the caller to show as "Stopped." — never wrapped into an
+   *  "AI pipeline error" message. */
+  signal?: AbortSignal
   /** Forward model tokens to `emit`? Off for the plain-JSON transport. */
   streaming: boolean
   /** The tool-using lane. Only the browser has tools, so only it passes this.
@@ -281,6 +285,7 @@ export async function runAi(req: AiRequest, deps: RunDeps): Promise<void> {
       script: result.script,
     })
   } catch (e) {
+    if (deps.signal?.aborted) throw e
     done(errorResponse(e))
   }
 }
