@@ -1,0 +1,10 @@
+# The exact environment the SIMBLIP Lite fine-tune was trained in (Python 3.12, CUDA 12.4, RTX 4060 Laptop 8 GB).
+torch==2.6.0
+transformers==5.19.0
+peft==0.21.2
+bitsandbytes==0.50.2
+accelerate==1.15.0
+datasets==5.1.0
+sentencepiece==0.2.2
+numpy==2.5.4
+gguf==0.19.0
