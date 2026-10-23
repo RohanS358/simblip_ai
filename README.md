@@ -3,7 +3,7 @@
 **A fine-tuned small model, a verified generation pipeline, a permission-gated tool-calling agent and a simulator-grounded lesson director: the AI layer of [SIMBLIP](https://github.com/RohanS358/simblip), the engineering notebook that simulates.**
 
 [![ci](https://github.com/RohanS358/simblip_ai/actions/workflows/ci.yml/badge.svg)](https://github.com/RohanS358/simblip_ai/actions/workflows/ci.yml)
-![tests](https://img.shields.io/badge/tests-557-brightgreen)
+![tests](https://img.shields.io/badge/tests-709-brightgreen)
 ![novel prompts](https://img.shields.io/badge/novel--prompt%20pass--all-93%25-brightgreen)
 ![model](https://img.shields.io/badge/model-Qwen3--0.6B%20QLoRA%20·%20640%20MB-blue)
 ![license](https://img.shields.io/badge/license-MIT-lightgrey)
@@ -38,7 +38,7 @@ The design rule behind all of it:
 
 | Requirement | Status | Where to look |
 |---|---|---|
-| Public GitHub repository, runnable | ✅ | this repo; `npm ci && npm test` runs **557 tests in about 30 s, no GPU needed** |
+| Public GitHub repository, runnable | ✅ | this repo; `npm ci && npm test` runs **709 tests in about 30 s, no GPU needed** |
 | README | ✅ | you are reading it |
 | Architecture overview | ✅ | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 | Technology details | ✅ | [Technology](#technology) below, [`docs/FINE_TUNING.md`](docs/FINE_TUNING.md), [`docs/EVALUATION.md`](docs/EVALUATION.md) |
@@ -287,7 +287,7 @@ Every design decision, with the evidence behind it and what would change it, is 
 | Validation | **zod** schemas wherever a model's output enters code; JSON-Schema grammar-constrained decoding for plans |
 | Agent surface | In-house tool registry; **Model Context Protocol** SDK for the bridge; WebMCP |
 | Retrieval / review | BM25 and FSRS-4.5, both hand-written, no model |
-| Tests | `node:test`, 557 tests, GitHub Actions CI |
+| Tests | `node:test`, 709 tests, GitHub Actions CI |
 
 ## Limitations
 

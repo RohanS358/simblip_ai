@@ -32,3 +32,14 @@ AI_SERVER_KEY=$(openssl rand -hex 32) npm run ai-server
 ```
 
 Lane → model mapping lives in [`ai-server/models.json`](../ai-server/models.json).
+
+## SketchNet (the sketch recognisers)
+
+Small convolutional classifiers that run in the browser, trained by [`scripts/ai/sketch/train`](../scripts/ai/sketch/train) and exported by `npm run sketch:export`. They are tiny (about 465 KB each) and are committed with their metadata, under [`public/models/`](../public/models) (the path the host app serves them from).
+
+| File | What | Notes |
+|---|---|---|
+| `sketchnet-v1.{onnx,bin,json}` | 21 wave-1 circuit classes + unknown, plus pose; 116,570 parameters | ONNX for tooling, `.bin` + `.json` for the in-browser loader (`lib/sketch/sketchnet.ts`) |
+| `inkchars-v1.{onnx,bin,json}` | handwritten digits and unit letters for reading values beside a part | `lib/sketch/values.ts` |
+
+Reports are in [`docs/ai/reports/`](../docs/ai/reports). **Read them with their caveat:** the held-out numbers (SketchNet v1: 98.1 % top-1 on 40,730 unseen *synthetic* writers, ECE 0.004) are on synthetic strokes only, and the decision log says so. A real-world number does not exist yet. The data is generated (`npm run sketch:synth`), not committed.
