@@ -144,73 +144,32 @@ async function extractSheet(file: File): Promise<ExtractResult> {
 // ── Images (OCR) ────────────────────────────────────────────────────────────
 
 /** An OCR pass that has stalled is indistinguishable from one that is just
- *  slow, so cap it. The wasm core (~4MB) and the English model (~3MB) are
- *  fetched from a CDN on the FIRST image of a session and cached by
- *  tesseract.js in IndexedDB afterwards, so this ceiling is sized for that
- *  cold first pass on a slow connection — a warm one runs in a few seconds. */
-const OCR_TIMEOUT_MS = 120_000
-
-type Recognize = (
-  image: File | string,
-  langs: string,
-  options: { logger: (m: { status?: string; progress?: number }) => void }
-) => Promise<{ data: { text?: string } }>
+ *  slow, so cap it. The reader's files are served from this origin now, so the
+ *  first photo takes a few seconds, not a download; the ceiling is for a very
+ *  slow device. */
+const OCR_TIMEOUT_MS = 60_000
 
 /**
- * Read the text out of an image.
+ * Read the text out of a photo.
  *
- * Loaded on demand: tesseract.js pulls a WASM core and a language model of
- * several megabytes, and most sessions never attach an image. Paying that on
- * every page load to serve a minority path would be the wrong trade.
- *
- * That download is also why this reports progress. Without it the first image
- * of a session looks like a hang: ~7MB arrives before a single character is
- * recognised, with nothing on screen to say so.
+ * Loaded on demand (lib/ai/ocr.ts): the reader is a WebAssembly core plus
+ * language data, and most sessions never attach a photo. Failures are worded
+ * for the student — what happened and what to do — never a raw exception.
  */
 async function extractImage(file: File, onProgress?: ProgressFn): Promise<ExtractResult> {
   let timer: ReturnType<typeof setTimeout> | undefined
   try {
-    // tesseract.js is CommonJS. Depending on the bundler's interop, the
-    // named export can come back undefined and only `default` carries the
-    // API — which failed as a bare "could not read this image". Take
-    // whichever form this build produced.
-    const mod = (await import('tesseract.js')) as unknown as {
-      recognize?: Recognize
-      default?: { recognize?: Recognize }
-    }
-    const recognize = mod.recognize ?? mod.default?.recognize
-    if (!recognize) throw new Error('the OCR library failed to load')
-    const run = recognize(file, 'eng', {
-      logger: (m: { status?: string; progress?: number }) => {
-        // tesseract's own phases: fetching the core, the language data, then
-        // 'recognizing text'. Reported verbatim — they are already readable.
-        if (m.status) onProgress?.(m.status, m.progress ?? 0)
-      },
-    })
+    const { readPhoto, PHOTO_NO_TEXT } = await import('./ocr')
     const timeout = new Promise<never>((_, reject) => {
-      timer = setTimeout(
-        () => reject(new Error(`OCR timed out after ${OCR_TIMEOUT_MS / 1000}s`)),
-        OCR_TIMEOUT_MS
-      )
+      timer = setTimeout(() => reject(new Error(`OCR timed out after ${OCR_TIMEOUT_MS / 1000}s`)), OCR_TIMEOUT_MS)
     })
-    const { data } = await Promise.race([run, timeout])
-    const text = (data.text ?? '').replace(/\s+\n/g, '\n').trim()
-    if (!text) {
-      return {
-        text: '',
-        warning:
-          'No readable text in this image. A diagram or graph cannot be understood by a text-only model — describe it in your question instead.',
-      }
-    }
-    return { text: clip(text) }
+    const text = await Promise.race([readPhoto(file, (status, p) => onProgress?.(status, p)), timeout])
+    return text ? { text: clip(text) } : { text: '', warning: PHOTO_NO_TEXT }
   } catch (e) {
-    // The reason matters: an offline machine cannot fetch the OCR model at
-    // all, and "Could not read this image" sent the user looking at their
-    // photo instead of at their connection.
-    return {
-      text: '',
-      warning: `Could not read this image: ${e instanceof Error ? e.message : String(e)}`,
-    }
+    // The detail is for whoever debugs; the student gets the plain version.
+    console.warn('[attachments] could not read photo:', e)
+    const { PHOTO_UNREADABLE } = await import('./ocr')
+    return { text: '', warning: PHOTO_UNREADABLE }
   } finally {
     clearTimeout(timer)
   }
