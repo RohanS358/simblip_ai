@@ -8,7 +8,7 @@ the files the AI code imports from the main SIMBLIP repository are vendored here
 are the AI system. Everything listed below is the host simulator they run against.
 
 The list was computed from the import graph (every module reachable from the AI code, minus the AI code itself), so nothing here is speculative and nothing needed is missing:
-if a file were absent the 557-test suite would not load.
+if a file were absent the 709-test suite would not load.
 
 | Directory | Files | What it is |
 |---|---:|---|
@@ -43,7 +43,7 @@ Plus `content/courses/` (125 authored lessons and 22 course manifests, as JSON, 
 
 `lib/auth/bootstrap.ts` seeds a local-mode operator account in the main repository. Its email and password are **redacted** here
 (`operator@example.invalid` / `redacted-local-demo-password`) so no credential is published. Nothing in the AI layer or the tests reads them.
-Every other vendored file is byte-for-byte the main repository's.
+Every other vendored file is byte-for-byte the main repository's, except that `lib/scene/simscript.ts` and `lib/physics/world.ts` were re-vendored with Sketch S4 (SIMBLIP `fdb6f36`, `ed92ac0`) and two files were added later (see the last table).
 
 ## Changing it
 

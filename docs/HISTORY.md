@@ -48,11 +48,32 @@ Branches dated *today* (`chore/…`, `docs/…`, `feature/teach-material-solve`)
 | 38 | `docs/substrate-redaction-note` | Record the one redaction in the vendored simulator | 2026-10-23 → 2026-10-23 | 1 | — |
 | 39 | `docs/data-to-output-pipeline` | docs/PIPELINE.md: inputs, ingestion, routing, agents, tools, verification, outputs; tool count corrected to 31 | 2026-10-23 → 2026-10-23 | 2 | — |
 | 40 | `docs/teacher-dialogue-chatbot` | README: screenshots and explanation of the AI teacher, the teaching dialogue and the chat assistant | 2026-10-23 → 2026-10-23 | 2 | — |
+| 41 | `feature/sketch-synthetic-data` | Sketch S1: synthetic stroke generator, shared sample format, baseline eval, consent draft | 2026-10-17 → 2026-10-17 | 2 | `0a6df89`, `25afc83` |
+| 42 | `feature/sketchnet-v1` | Sketch S2: SketchNet v1 (train, calibrate, export, in-browser inference), retrained with bare symbols | 2026-10-18 → 2026-10-18 | 2 | `45711fc`, `c81ccb2` |
+| 43 | `feature/sketch-held-symbols` | Intent-based acceptance and multi-stroke grouping for held symbols | 2026-10-18 → 2026-10-18 | 1 | `0dea6ee` |
+| 44 | `feature/sketch-circuit-reader` | Sketch S3: whole-circuit reader, synthetic scenes, handwritten values, explicit Done step | 2026-10-18 → 2026-10-18 | 6 | `ab81536`, `b6ed2aa`, `cd54f85`, `124b5c3`, `8a39def`, `6df26ba` |
+| 45 | `chore/substrate-optics-engine` | Vendor the optics ray tracer the sketch optics path calls | 2026-10-23 → 2026-10-23 | 1 | — |
+| 46 | `feature/sketch-mechanics-optics` | Sketch S4: mechanics and optics readers and compilers, headless physics stepper | 2026-10-18 → 2026-10-18 | 4 | `1ba4d21`, `ed92ac0`, `fdb6f36`, `0695610` |
+| 47 | `feature/sketch-values-and-router` | Better handwritten-value reading, character-model report, lone-symbol routing fix | 2026-10-19 → 2026-10-20 | 3 | `5240e42`, `8373e90`, `c430729` |
+| 48 | `fix/sketch-worker-and-confidence` | Read off the UI thread, split one-stroke circuits, evidence-based confidence, retrained model | 2026-10-22 → 2026-10-22 | 3 | `daaa730`, `508fda3`, `f23d465` |
+| 49 | `feature/photo-and-tutor-sketch-tools` | Sketch S5 photo-to-simulation and S6 tutor sketch tools | 2026-10-22 → 2026-10-23 | 3 | `9956afd`, `badc661` |
+| 50 | `chore/substrate-server-auth` | Vendor the bearer-token helper the AI request guard uses | 2026-10-23 → 2026-10-23 | 1 | — |
+| 51 | `fix/ai-request-guard-and-photo-budget` | /api/ai auth and per-user rate limit, photo DoS budget and worker timeout | 2026-10-23 → 2026-10-23 | 1 | `f47b612` |
+| 52 | `feature/sketch-diagnosis-external-data` | Tutor diagnosis ("why does my circuit not work"), external circuit datasets, SketchNet v5 | 2026-10-23 → 2026-10-23 | 2 | `ae3a394` |
+| 53 | `fix/test-portability` | Bundled-module tests run on Windows and without Next.js | 2026-10-23 → 2026-10-23 | 1 | — |
+| 54 | `chore/sketch-align-with-simblip` | One sketch lineage: lib/sketch and scripts/ai/sketch byte-for-byte from SIMBLIP dev | 2026-10-23 → 2026-10-23 | 1 | — |
+| 55 | `docs/sketch-history-and-models` | HISTORY rows for the sketch pipeline; SketchNet in the model table; substrate note | 2026-10-23 → 2026-10-23 | 1 | — |
 
 
-**40 branches.**
+**55 branches.**
 
 Every branch is still present on the remote (`git branch -r`), so you can check any stage out and read the code as it was at that point.
+
+## The sketch pipeline (branches 41–54)
+
+These branches replay SIMBLIP's own Sketch S1 to S6 history (synthetic data, SketchNet, the circuit, mechanics and optics readers, the photo path, the tutor sketch tools, the request guard) on top of the earlier work, with the original authors and dates. Two branches (`chore/substrate-*`) vendor the host files the replayed code started importing, one (`fix/test-portability`) makes the bundled-module tests run on Windows and without Next.js, and `chore/sketch-align-with-simblip` makes `lib/sketch` and `scripts/ai/sketch` one lineage: the first extraction had replayed a parallel S0 (different `ir.ts`, gold set and `units.ts`), which is replaced by SIMBLIP's own.
+
+Verification on the final tree: `npm test` 709 passed, 0 failed, 2 skipped; `tsc --noEmit` clean.
 
 ## Timeline in two phases
 
