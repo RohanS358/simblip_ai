@@ -63,6 +63,102 @@ The brief says AI must *process, transform or reason over data as part of core l
 It also **uses tools and external systems**, **holds context** (conversation memory, page awareness, learner state) and **takes action** (builds, edits, runs, opens pages, schedules review), the other criteria in the Frogtoberfest brief.
 The full table, with file and function names, is in [`docs/AI_USAGE_DISCLOSURE.md`](docs/AI_USAGE_DISCLOSURE.md).
 
+## See it work: the AI teacher, the teaching dialogue and the chat assistant
+
+These are screenshots of the real SIMBLIP app driven by this AI layer (taken by the end-to-end scripts, not mocked up). The screens themselves are React components in the main repository;
+the intelligence behind every pixel below is the code in this one.
+
+### The AI teacher
+
+<p align="center"><img src="docs/images/teacher-explaining.webp" alt="The animated AI teacher at the bottom right of the board, explaining a circle the student drew around a section title, with a measured 13.6 mA on the circuit" width="880"></p>
+
+Asked "teach me Ohm's law", the assistant plays a **narrated, interactive lesson taught by a drawn teacher** who stands at the board. She is not a video:
+
+* **She is driven by the lesson.** A layered SVG rig is repainted every frame by a deterministic frame loop ([`lib/frame/loop.ts`](lib/frame/loop.ts), [`lib/teacher/rig.ts`](lib/teacher/rig.ts)). Her arm is a two-bone IK chain, so she **points at the exact part she is explaining**; her mouth follows the letter the voice has reached; her mood (curious, delighted, concerned) and pose change with what the lesson is doing.
+* **She talks.** Narration is a neural voice (Kokoro-82M, served by [`ai-server/tts`](ai-server/tts)); the caption types out in step with the audio clock, and the next lines are prefetched so a beat never waits.
+* **The board keeps everything.** Each idea opens a numbered *section* below the last, with key points, a picture, and a formula that writes itself on while she explains it. At the end the board becomes study notes that print to PDF or copy as Markdown. ([`lib/lesson/sections.ts`](lib/lesson/sections.ts), [`stage.ts`](lib/lesson/stage.ts))
+* **The numbers are real.** The 13.6 mA on the ammeter above is measured by the simulator (9 V / 660 Ω), never written by the model.
+
+Where it lives: [`lib/teacher/`](lib/teacher), [`lib/lesson/`](lib/lesson) (Director, Player, Stage), [`lib/frame/`](lib/frame), [`lib/tts/`](lib/tts). Design notes: [`docs/lesson-teacher.md`](docs/lesson-teacher.md).
+
+### The teaching dialogue
+
+A lesson is a **conversation, not a lecture**. The student can interrupt at any moment, and the teacher listens, answers, and adapts.
+
+<table>
+<tr>
+<td width="50%"><img src="docs/images/dialogue-ask-and-notes.webp" alt="After explaining, the teacher offers: Got it carry on, Simpler please, Tell me more, Ask something else"></td>
+<td width="50%"><img src="docs/images/dialogue-checkin.webp" alt="A check-in: How is that going so far? Clear, A bit tough, Too easy, Say it again, with live sliders for resistance and supply voltage"></td>
+</tr>
+<tr>
+<td><sub><b>Ask → explain → choose.</b> After answering, she offers <i>Got it, carry on / Simpler, please / Tell me more / Ask something else</i>.</sub></td>
+<td><sub><b>Check-in.</b> <i>"How is that going so far?"</i> with <i>Clear / A bit tough / Too easy / Say it again</i>, beside live sliders the student can drag.</sub></td>
+</tr>
+</table>
+
+| Move | What the student does | What the AI does | Code |
+|---|---|---|---|
+| **Predict, then reveal** | Commits to an answer *before* seeing the result | Freezes the film, shows the choices, **runs the simulation** to reveal the true answer; a wrong prediction explains the intuition behind it and becomes a flash card | [`player.ts`](lib/lesson/player.ts), [`storyboard.ts`](lib/lesson/storyboard.ts) (`predict` beat) |
+| **Ask about anything** | Circles, taps or selects a part of the board, or types a question | Stops the film where it is (sections stay), rings the object, points at it, explains **that**, then resumes from the interrupted line | `askAbout()` in [`tutor.ts`](lib/lesson/tutor.ts); `pickObjects()` maps a circle to objects |
+| **Ask for something new** | "Show me three resistors in parallel and teach me what happens" | **Plans, draws and teaches it live** in new sections below, using the same Director and the real simulator, then returns to the lesson | `playAside()` in [`aside.ts`](lib/lesson/aside.ts) |
+| **Check-in** | Taps *Clear / A bit tough / Too easy / Say it again* | Before each new chapter (every ≥ 10 beats) and straight after two wrong answers she asks; `adapt()` changes **depth and speed** (tough: simpler, slower, re-explains; easy: deeper, faster) | `checkIn()`, `adapt()`, `shouldCheckIn()` in [`tutor-core.ts`](lib/lesson/tutor-core.ts) |
+| **Whenever there is no model** | (offline, no server) | Still says what a thing is and what it is set to, so asking never returns a blank | `fallbackExplain()` |
+
+<p align="center"><img src="docs/images/dialogue-live-aside.webp" alt="Mid-lesson question answered live: a three-resistor parallel circuit with an ammeter on each branch, key points and a typing caption" width="760"></p>
+
+*A mid-lesson question answered live: a real three-resistor parallel circuit with an ammeter on each branch, drawn into a new section while the teacher talks through it.*
+
+```mermaid
+stateDiagram-v2
+  [*] --> idle
+  idle --> selecting: student circles / taps / selects
+  idle --> thinking: student types a question
+  selecting --> thinking
+  thinking --> answering: model (or fallbackExplain) explains it
+  thinking --> idle: aside drawn and taught
+  answering --> idle: Got it, carry on (resume the interrupted line)
+  answering --> thinking: Simpler / Tell me more / Ask something else
+  idle --> checkin: new chapter, or two misses in a row
+  checkin --> idle: adapt() sets depth and speed
+```
+
+*(Simplified from the tutor's modes: `idle · selecting · thinking · answering · checkin`, in [`tutor-store.ts`](lib/lesson/tutor-store.ts).)*
+
+The model's part in the dialogue is *wording and choosing what to draw*; the pace changes, the interruption bookkeeping, the object picking and every measured value are code, and are tested ([`tutor-core`](lib/lesson/tutor-core.ts), [`player.test.mjs`](lib/lesson/player.test.mjs), [`tutor-core.test.mjs`](lib/lesson/tutor-core.test.mjs)).
+
+### The AI chat assistant
+
+<table>
+<tr>
+<td width="30%" valign="top"><img src="docs/images/chat-panel.webp" alt="The assistant panel: Describe a simulation, example prompts, a context chip showing this page and its object count, model picker and Manual/Auto switch"></td>
+<td valign="top">
+
+The assistant lives in a panel beside the board. What you see:
+
+* **Context chip** (`@ this page · 5 objects`): the page's live state is sent as data, so *"make the bob heavier"* addresses an object that already exists.
+* **Paperclip**: attach a PDF, Word, PowerPoint, Excel or text file, or a **screenshot or photo of a question**. Text is extracted in the browser (OCR for images); "solve this" with a photo starts a worked solution.
+* **Learn / Answer** toggle and a **Recall · N due** strip for flash cards (never inferred, always the student's choice).
+* **Model picker** and a **Manual / Auto** switch; a private **on-device** option (*nothing you type leaves your computer*) next to the server.
+* **Example prompts** and quick actions (*Explain this scene*, *Check the physics*).
+* **Tool chips** (`teach.page`, `teach.lesson`) show every tool the agent called and what it returned, so nothing happens invisibly.
+
+Under it: the router, the agents and the 31 tools described in [the pipeline](docs/PIPELINE.md).
+
+</td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td width="62%"><img src="docs/images/chat-page-tour.webp" alt="Chat shows 'teach me whatever is in this page' answered by a teach.page tool chip; on the board one object glows while the teacher says this is a simulation made of 1 part"></td>
+<td width="38%" valign="top"><img src="docs/images/generated-scene.webp" alt="A generated voltage-divider scene: wired circuit, slider, graph and an explanatory note"></td>
+</tr>
+<tr>
+<td><sub><b>"teach me whatever is in this page"</b>: the chat shows the <code>teach.page</code> tool call; the board glows the object being explained.</sub></td>
+<td><sub><b>A generated scene</b>: voltage divider with its slider, plot and note.</sub></td>
+</tr>
+</table>
+
 ## From data to output: the full pipeline
 
 What goes in, how it is read, which agents and tools act on it, and what comes out. Full detail with file and function names for every stage: **[`docs/PIPELINE.md`](docs/PIPELINE.md)**.
