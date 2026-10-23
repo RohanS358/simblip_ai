@@ -13,3 +13,6 @@ __pycache__/
 
 # sketch datasets (generated / collected; manifests are what we keep)
 /data/sketch/
+
+# Photo-reader assets copied from node_modules by scripts/copy-tesseract.mjs
+public/vendor/tesseract/
