@@ -8,7 +8,7 @@
   },
   "license": "MIT",
   "engines": {
-    "node": ">=22.6"
+    "node": ">=24"
   },
   "scripts": {
     "test": "npm run test:ai && npm run test:server",
@@ -22,7 +22,8 @@
     "data:tools": "node scripts/ai/data/tools-dataset.mjs",
     "eval:score": "node scripts/ai/eval/score-jsonl.mjs",
     "eval:quality": "node scripts/ai/quality/evaluate.mjs",
-    "results": "node scripts/ai/eval/summarize-results.mjs"
+    "results": "node scripts/ai/eval/summarize-results.mjs",
+    "show:verifier": "node scripts/ai/show-verifier.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",
@@ -52,6 +53,7 @@
     "@types/react-dom": "^19",
     "@types/ws": "^8.18.1",
     "docx": "^9.7.1",
+    "esbuild": "^0.28.2",
     "jspdf": "^4.2.1",
     "pptxgenjs": "^4.0.1",
     "sharp": "^0.34.5",
