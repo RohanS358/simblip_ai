@@ -21,7 +21,8 @@
     "data:build": "node scripts/ai/data/build-dataset.mjs",
     "data:tools": "node scripts/ai/data/tools-dataset.mjs",
     "eval:score": "node scripts/ai/eval/score-jsonl.mjs",
-    "eval:quality": "node scripts/ai/quality/evaluate.mjs"
+    "eval:quality": "node scripts/ai/quality/evaluate.mjs",
+    "results": "node scripts/ai/eval/summarize-results.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",

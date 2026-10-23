@@ -1,0 +1,443 @@
+[
+ {
+  "prompt": "Make an RC low-pass filter that cuts off at about 1 kHz",
+  "recipe": "novel",
+  "total": 0,
+  "valid": 0,
+  "f": 0,
+  "looks": 0,
+  "teaches": 0,
+  "issues": [
+   "lint: unknown kind \"vs\" — not a SimScript component",
+   "lint: graph.plot(c.channel.V) — \"c.channel.V\" goes too deep; plot a channel directly, e.g. c.V (valid: V, I, P)"
+  ]
+ },
+ {
+  "prompt": "I need a circuit with a 9 V battery and three resistors in series, then show me the current",
+  "recipe": "novel",
+  "total": 68.7,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.8607647946523584,
+  "teaches": 0.14117647058823532,
+  "issues": [
+   "1 wire kink sideways",
+   "nothing is plotted",
+   "no note says what to look at",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "build a voltage divider that gives 3.3 V out of 12 V",
+  "recipe": "novel",
+  "total": 58.7,
+  "valid": 1,
+  "f": 0.72,
+  "looks": 0.7168362073913102,
+  "teaches": 0.28235294117647064,
+  "issues": [
+   "no current flows — the circuit is open or unpowered",
+   "a wire runs through resistor1",
+   "a wire runs through ground",
+   "a wire runs through battery",
+   "a wire runs through resistor2",
+   "a wire runs through resistor2",
+   "a wire runs through resistor2",
+   "a wire runs through resistor1",
+   "a wire runs through voltmeter",
+   "2 wires kink sideways",
+   "the scene is very wide (3.6:1)",
+   "the plot shows no change",
+   "no note says what to look at",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "Show me how a capacitor charges when I close a switch",
+  "recipe": "novel",
+  "total": 62.1,
+  "valid": 1,
+  "f": 0.72,
+  "looks": 0.85334337661373,
+  "teaches": 0.21176470588235297,
+  "issues": [
+   "no current flows — the circuit is open or unpowered",
+   "a wire runs through capacitor",
+   "a wire runs through battery",
+   "a wire runs through capacitor",
+   "a wire runs through resistor",
+   "a wire runs through resistor",
+   "a wire runs through probe",
+   "the scene is very wide (3.4:1)",
+   "the plot shows no change",
+   "parts are not named (R1, R2, Vin…)",
+   "no note says what to look at",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "two light bulbs side by side on a battery, what happens when one burns out?",
+  "recipe": "novel",
+  "total": 0,
+  "valid": 0,
+  "f": 0,
+  "looks": 0,
+  "teaches": 0,
+  "issues": [
+   "lint: graph.plot(bulb1.channel.V) — \"bulb1.channel.V\" goes too deep; plot a channel directly, e.g. bulb1.V (valid: V, I, P)",
+   "lint: graph.plot(bulb1.channel.I) — \"bulb1.channel.I\" goes too deep; plot a channel directly, e.g. bulb1.V (valid: V, I, P)",
+   "lint: graph.plot(bulb2.channel.V) — \"bulb2.channel.V\" goes too deep; plot a channel directly, e.g. bulb2.V (valid: V, I, P)"
+  ]
+ },
+ {
+  "prompt": "A pendulum on a long string, 0.3 m, I want to change its mass",
+  "recipe": "novel",
+  "total": 0,
+  "valid": 0,
+  "f": 0,
+  "looks": 0,
+  "teaches": 0,
+  "issues": [
+   "lint: graph.plot(mass.channel) — \"mass\" has no channel \"channel\"; use one of: x, y, vx, vy, speed, angle, swing, omega, ke"
+  ]
+ },
+ {
+  "prompt": "a spring with a heavy weight bouncing up and down, let me change the stiffness",
+  "recipe": "novel",
+  "total": 0,
+  "valid": 0,
+  "f": 0,
+  "looks": 0,
+  "teaches": 0,
+  "issues": [
+   "lint: graph.plot(mass.channel) — \"mass\" has no channel \"channel\"; use one of: x, y, vx, vy, speed, angle, swing, omega, ke"
+  ]
+ },
+ {
+  "prompt": "Throw a ball at 45 degrees and show its path",
+  "recipe": "novel",
+  "total": 0,
+  "valid": 0,
+  "f": 0,
+  "looks": 0,
+  "teaches": 0,
+  "issues": [
+   "lint: graph.plot(ball.channel) — \"mass\" has no channel \"channel\"; use one of: x, y, vx, vy, speed, angle, swing, omega, ke"
+  ]
+ },
+ {
+  "prompt": "A heavy block hits a light block that is standing still",
+  "recipe": "novel",
+  "total": 0,
+  "valid": 0,
+  "f": 0,
+  "looks": 0,
+  "teaches": 0,
+  "issues": [
+   "lint: graph.plot(heavy.channel) — \"block\" has no channel \"channel\"; use one of: x, y, vx, vy, speed, angle, swing, omega, ke",
+   "lint: graph.plot(light.channel) — \"block\" has no channel \"channel\"; use one of: x, y, vx, vy, speed, angle, swing, omega, ke"
+  ]
+ },
+ {
+  "prompt": "What does a block on a steep slope with no friction do?",
+  "recipe": "novel",
+  "total": 70,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 0,
+  "issues": [
+   "nothing is plotted",
+   "no note says what to look at",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "LED with a resistor so it does not burn out on 5 volts",
+  "recipe": "novel",
+  "total": 73.1,
+  "valid": 1,
+  "f": 0.72,
+  "looks": 0.9614814814814815,
+  "teaches": 0.43529411764705883,
+  "issues": [
+   "no current flows — the circuit is open or unpowered",
+   "1 wire kink sideways",
+   "the plot shows no change",
+   "parts are not named (R1, R2, Vin…)",
+   "no note says what to look at"
+  ]
+ },
+ {
+  "prompt": "show half wave rectifier with filter capacitor 50 Hz",
+  "recipe": "novel",
+  "total": 0,
+  "valid": 0,
+  "f": 0,
+  "looks": 0,
+  "teaches": 0,
+  "issues": [
+   "lint: graph.plot(cap.channel.V) — \"cap.channel.V\" goes too deep; plot a channel directly, e.g. cap.V (valid: V, I, P)"
+  ]
+ },
+ {
+  "prompt": "an inverting amplifier with gain 10 using an op-amp",
+  "recipe": "novel",
+  "total": 0,
+  "valid": 0,
+  "f": 0,
+  "looks": 0,
+  "teaches": 0,
+  "issues": [
+   "threw: Cannot read properties of undefined (reading 'out')"
+  ]
+ },
+ {
+  "prompt": "A step down transformer from 230 V to about 12 V",
+  "recipe": "novel",
+  "total": 0,
+  "valid": 0,
+  "f": 0,
+  "looks": 0,
+  "teaches": 0,
+  "issues": [
+   "lint: syntax: Unexpected token ','"
+  ]
+ },
+ {
+  "prompt": "AND gate with two switches and a truth table",
+  "recipe": "novel",
+  "total": 60.6,
+  "valid": 1,
+  "f": 0.72,
+  "looks": 0.5777777777777777,
+  "teaches": 0.5294117647058824,
+  "issues": [
+   "no current flows — the circuit is open or unpowered",
+   "Switch 1 overlaps Truth Table",
+   "Switch 2 overlaps Truth Table",
+   "AND Gate overlaps Truth Table",
+   "Output overlaps Truth Table",
+   "a wire runs through Switch 2",
+   "a wire runs through Switch 2",
+   "a wire runs through Switch 2",
+   "a wire runs through Switch 2",
+   "2 wires kink sideways",
+   "no note says what to look at",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "how does a half adder add two bits?",
+  "recipe": "novel",
+  "total": 0,
+  "valid": 0,
+  "f": 0,
+  "looks": 0,
+  "teaches": 0,
+  "issues": [
+   "threw: Cannot set properties of undefined (setting 'cx')"
+  ]
+ },
+ {
+  "prompt": "4 bit binary counter with a slow clock",
+  "recipe": "novel",
+  "total": 85.9,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 0.5294117647058824,
+  "issues": [
+   "no note says what to look at",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "A ball falling from 2 metres onto the floor, plot the height",
+  "recipe": "novel",
+  "total": 85.9,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 0.5294117647058824,
+  "issues": [
+   "no note says what to look at",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "spring mass damper system with a damping slider",
+  "recipe": "novel",
+  "total": 0,
+  "valid": 0,
+  "f": 0,
+  "looks": 0,
+  "teaches": 0,
+  "issues": [
+   "lint: graph.plot(mass.channel) — \"mass\" has no channel \"channel\"; use one of: x, y, vx, vy, speed, angle, swing, omega, ke"
+  ]
+ },
+ {
+  "prompt": "a resonant RLC circuit at 500 Hz",
+  "recipe": "novel",
+  "total": 69.9,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.7155555555555556,
+  "teaches": 0.3764705882352941,
+  "issues": [
+   "battery overlaps resistor",
+   "resistor overlaps inductor",
+   "inductor overlaps capacitor",
+   "sl overlaps sl2",
+   "sl overlaps sl3",
+   "sl2 overlaps sl3",
+   "a wire runs through resistor",
+   "a wire runs through battery",
+   "the plot shows no change",
+   "parts are not named (R1, R2, Vin…)",
+   "no note says what to look at"
+  ]
+ },
+ {
+  "prompt": "lens focusing a beam of light onto a screen",
+  "recipe": "novel",
+  "total": 77.7,
+  "valid": 1,
+  "f": 1,
+  "looks": 0.7953092103245707,
+  "teaches": 0.5294117647058824,
+  "issues": [
+   "a wire runs through Light Source",
+   "the scene is very wide (14.0:1)",
+   "no note says what to look at",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "a charged particle curving in a magnetic field",
+  "recipe": "novel",
+  "total": 0,
+  "valid": 0,
+  "f": 0,
+  "looks": 0,
+  "teaches": 0,
+  "issues": [
+   "lint: graph.plot(charge.channel) — \"charge\" has no channel \"channel\"; use one of: x, y, vx, vy, speed, angle, swing, omega, ke"
+  ]
+ },
+ {
+  "prompt": "Two resistors in parallel, 220 and 330 ohms, with an ammeter",
+  "recipe": "novel",
+  "total": 66.7,
+  "valid": 1,
+  "f": 0.72,
+  "looks": 0.8902322655026189,
+  "teaches": 0.31764705882352945,
+  "issues": [
+   "no current flows — the circuit is open or unpowered",
+   "a wire runs through bat",
+   "the scene is very wide (3.4:1)",
+   "the plot shows no change",
+   "no note says what to look at",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "series and parallel resistors together: one in series with a pair in parallel",
+  "recipe": "novel",
+  "total": 67.5,
+  "valid": 1,
+  "f": 0.72,
+  "looks": 0.7333333333333333,
+  "teaches": 0.5529411764705883,
+  "issues": [
+   "no current flows — the circuit is open or unpowered",
+   "bat overlaps r1",
+   "r1 overlaps r2",
+   "r2 overlaps r3",
+   "Slider 23 overlaps Slider 25",
+   "Slider 23 overlaps sl",
+   "Slider 25 overlaps sl",
+   "a wire runs through bat",
+   "a wire runs through r1",
+   "the plot shows no change",
+   "no note says what to look at"
+  ]
+ },
+ {
+  "prompt": "mass swinging on a rope, show the speed",
+  "recipe": "novel",
+  "total": 0,
+  "valid": 0,
+  "f": 0,
+  "looks": 0,
+  "teaches": 0,
+  "issues": [
+   "lint: create(\"slider\", { targetParamName: \"length\" }) — \"rope\" has no param \"length\", so the slider drives nothing; use one of: x, y, width, height, rotation, damping"
+  ]
+ },
+ {
+  "prompt": "a D flip-flop remembering a bit",
+  "recipe": "novel",
+  "total": 85.9,
+  "valid": 1,
+  "f": 1,
+  "looks": 1,
+  "teaches": 0.5294117647058824,
+  "issues": [
+   "no note says what to look at",
+   "nothing to play with (no slider)"
+  ]
+ },
+ {
+  "prompt": "RL circuit where the current builds up slowly",
+  "recipe": "novel",
+  "total": 0,
+  "valid": 0,
+  "f": 0,
+  "looks": 0,
+  "teaches": 0,
+  "issues": [
+   "lint: graph.plot(resistor.channel.V) — \"resistor.channel.V\" goes too deep; plot a channel directly, e.g. resistor.V (valid: V, I, P)",
+   "lint: graph.plot(resistor.channel.I) — \"resistor.channel.I\" goes too deep; plot a channel directly, e.g. resistor.V (valid: V, I, P)",
+   "lint: graph.plot(inductor.channel.V) — \"inductor.channel.V\" goes too deep; plot a channel directly, e.g. inductor.V (valid: V, I, P)"
+  ]
+ },
+ {
+  "prompt": "a bulb and a switch on a 6 V battery",
+  "recipe": "novel",
+  "total": 0,
+  "valid": 0,
+  "f": 0,
+  "looks": 0,
+  "teaches": 0,
+  "issues": [
+   "threw: Cannot set properties of undefined (setting 'cx')"
+  ]
+ },
+ {
+  "prompt": "Show me Ohm's law with a variable resistor",
+  "recipe": "novel",
+  "total": 0,
+  "valid": 0,
+  "f": 0,
+  "looks": 0,
+  "teaches": 0,
+  "issues": [
+   "lint: graph.plot(resistor.channel) — \"potentiometer\" has no channel \"channel\"; use one of: Vtop, Vwiper, Vbottom"
+  ]
+ },
+ {
+  "prompt": "projectile launched horizontally from a cliff",
+  "recipe": "novel",
+  "total": 0,
+  "valid": 0,
+  "f": 0,
+  "looks": 0,
+  "teaches": 0,
+  "issues": [
+   "lint: syntax: Unexpected number"
+  ]
+ }
+]

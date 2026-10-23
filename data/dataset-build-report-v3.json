@@ -1,0 +1,263 @@
+{
+ "n": 7000,
+ "kept": 6409,
+ "min": {
+  "function": 0.9,
+  "looks": 0.8,
+  "teaches": 0.7
+ },
+ "stats": {
+  "rectifier": {
+   "n": 251,
+   "ok": 247,
+   "dup": 4,
+   "looks": 236.0601481481487,
+   "teaches": 247,
+   "fn": 247,
+   "fails": {}
+  },
+  "rc-lowpass": {
+   "n": 291,
+   "ok": 291,
+   "dup": 0,
+   "looks": 282.377777777778,
+   "teaches": 291,
+   "fn": 291,
+   "fails": {}
+  },
+  "opamp-inv": {
+   "n": 201,
+   "ok": 201,
+   "dup": 0,
+   "looks": 176.0935995835693,
+   "teaches": 201,
+   "fn": 201,
+   "fails": {}
+  },
+  "collision": {
+   "n": 268,
+   "ok": 268,
+   "dup": 0,
+   "looks": 260.05925925926005,
+   "teaches": 268,
+   "fn": 268,
+   "fails": {}
+  },
+  "bulbs": {
+   "n": 300,
+   "ok": 300,
+   "dup": 0,
+   "looks": 290.5440000000002,
+   "teaches": 236.47058823529278,
+   "fn": 300,
+   "fails": {}
+  },
+  "series-parallel": {
+   "n": 282,
+   "ok": 282,
+   "dup": 0,
+   "looks": 265.53955555555586,
+   "teaches": 222.28235294117525,
+   "fn": 282,
+   "fails": {}
+  },
+  "dff": {
+   "n": 117,
+   "ok": 20,
+   "dup": 97,
+   "looks": 18.270098667150492,
+   "teaches": 15.29411764705883,
+   "fn": 20,
+   "fails": {}
+  },
+  "parallel": {
+   "n": 327,
+   "ok": 327,
+   "dup": 0,
+   "looks": 302.79762962962945,
+   "teaches": 257.75294117646916,
+   "fn": 327,
+   "fails": {}
+  },
+  "rc-charge": {
+   "n": 308,
+   "ok": 308,
+   "dup": 0,
+   "looks": 308,
+   "teaches": 308,
+   "fn": 308,
+   "fails": {}
+  },
+  "projectile": {
+   "n": 253,
+   "ok": 253,
+   "dup": 0,
+   "looks": 248.50222222222163,
+   "teaches": 253,
+   "fn": 253,
+   "fails": {}
+  },
+  "gate": {
+   "n": 347,
+   "ok": 197,
+   "dup": 150,
+   "looks": 180.94814814814808,
+   "teaches": 150.64705882352914,
+   "fn": 197,
+   "fails": {}
+  },
+  "free-fall": {
+   "n": 287,
+   "ok": 287,
+   "dup": 0,
+   "looks": 287,
+   "teaches": 287,
+   "fn": 287,
+   "fails": {}
+  },
+  "pendulum": {
+   "n": 412,
+   "ok": 412,
+   "dup": 0,
+   "looks": 412,
+   "teaches": 412,
+   "fn": 412,
+   "fails": {}
+  },
+  "led": {
+   "n": 269,
+   "ok": 254,
+   "dup": 15,
+   "looks": 254,
+   "teaches": 200.2117647058813,
+   "fn": 254,
+   "fails": {}
+  },
+  "half-adder": {
+   "n": 139,
+   "ok": 40,
+   "dup": 99,
+   "looks": 34.404633117011784,
+   "teaches": 30.58823529411767,
+   "fn": 40,
+   "fails": {}
+  },
+  "rl": {
+   "n": 202,
+   "ok": 202,
+   "dup": 0,
+   "looks": 202,
+   "teaches": 202,
+   "fn": 202,
+   "fails": {}
+  },
+  "incline": {
+   "n": 267,
+   "ok": 267,
+   "dup": 0,
+   "looks": 243.26666666666495,
+   "teaches": 243.4411764705873,
+   "fn": 267,
+   "fails": {}
+  },
+  "series": {
+   "n": 399,
+   "ok": 399,
+   "dup": 0,
+   "looks": 389.6658201058198,
+   "teaches": 314.50588235294134,
+   "fn": 399,
+   "fails": {}
+  },
+  "divider": {
+   "n": 402,
+   "ok": 402,
+   "dup": 0,
+   "looks": 387.46844444444605,
+   "teaches": 316.87058823529435,
+   "fn": 402,
+   "fails": {}
+  },
+  "counter": {
+   "n": 126,
+   "ok": 30,
+   "dup": 96,
+   "looks": 26.44444444444446,
+   "teaches": 30,
+   "fn": 30,
+   "fails": {}
+  },
+  "lens": {
+   "n": 213,
+   "ok": 183,
+   "dup": 30,
+   "looks": 183,
+   "teaches": 183,
+   "fn": 183,
+   "fails": {}
+  },
+  "rlc": {
+   "n": 252,
+   "ok": 252,
+   "dup": 0,
+   "looks": 252,
+   "teaches": 252,
+   "fn": 252,
+   "fails": {}
+  },
+  "spring-mass": {
+   "n": 408,
+   "ok": 408,
+   "dup": 0,
+   "looks": 408,
+   "teaches": 408,
+   "fn": 408,
+   "fails": {}
+  },
+  "damped": {
+   "n": 209,
+   "ok": 209,
+   "dup": 0,
+   "looks": 209,
+   "teaches": 209,
+   "fn": 209,
+   "fails": {}
+  },
+  "transformer": {
+   "n": 152,
+   "ok": 152,
+   "dup": 0,
+   "looks": 124.97777777777786,
+   "teaches": 152,
+   "fn": 152,
+   "fails": {}
+  },
+  "rope-swing": {
+   "n": 141,
+   "ok": 120,
+   "dup": 21,
+   "looks": 120,
+   "teaches": 91.76470588235303,
+   "fn": 120,
+   "fails": {}
+  },
+  "wave-boundary": {
+   "n": 54,
+   "ok": 10,
+   "dup": 44,
+   "looks": 9.925206909754218,
+   "teaches": 7.647058823529411,
+   "fn": 10,
+   "fails": {}
+  },
+  "charge-b": {
+   "n": 123,
+   "ok": 88,
+   "dup": 35,
+   "looks": 88,
+   "teaches": 88,
+   "fn": 88,
+   "fails": {}
+  }
+ }
+}
