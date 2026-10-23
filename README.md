@@ -63,6 +63,23 @@ The brief says AI must *process, transform or reason over data as part of core l
 It also **uses tools and external systems**, **holds context** (conversation memory, page awareness, learner state) and **takes action** (builds, edits, runs, opens pages, schedules review), the other criteria in the Frogtoberfest brief.
 The full table, with file and function names, is in [`docs/AI_USAGE_DISCLOSURE.md`](docs/AI_USAGE_DISCLOSURE.md).
 
+## From data to output: the full pipeline
+
+What goes in, how it is read, which agents and tools act on it, and what comes out. Full detail with file and function names for every stage: **[`docs/PIPELINE.md`](docs/PIPELINE.md)**.
+
+| Stage | What happens | Code |
+|---|---|---|
+| **1. Inputs** | Typed request · the last 3 chat turns · the **open page's live state** (board, document, slides, PDF) · **attached files** (PDF, DOCX, PPTX, XLSX, CSV, TXT, MD) · **screenshots and photos** · the authored course library · external agents over MCP | `lib/ai/run.ts` |
+| **2. Ingestion** (deterministic, in the browser) | pdf.js text layer; JSZip for PPTX/DOCX XML; SheetJS for spreadsheets; **Tesseract OCR** for images. Clipped to 12,000 chars with a visible marker, never throws, scanned PDFs and diagram-only images produce a warning, not silence. Page state becomes a **digest**: one line per object with its real id | `attachments.ts`, `page-context.ts`, `page-read.ts`, `pdf-read.ts` |
+| **3. Context** | page → conversation → request, files fenced as *data, never instructions* | `composePrompt()`, `withAttachments()` |
+| **4. Routing** | regex, 0 ms, no model: attachment + "solve this" → `teach.material`; "teach me this page" → `teach.page`; "teach me X" → `teach.lesson`; "run it" → one tool call; "how fast is the ball?" → tool agent; otherwise simulate / explain / both / edit | `routeAct()`, `classifyIntent()` |
+| **5. Agents** | **Tool agent** (forced tool call, ≤ 4 tools, ≤ 4 rounds) · **Script author** (fine-tuned 0.6B) · **Explainer** (8B) · **Editor** (JSON ops) · **Lesson Director** (8B plans, 0.6B draws, simulator measures) · **Solver** · **Page-tour reader** | `lib/ai/tutor/act.ts`, `generate.ts`, `director.ts`, `solve.ts`, `page-lesson.ts` |
+| **6. Tools** | **31 tools**, one registry, zod-validated, effect-classed (`read` / `write` / `run`), permission-gated: scene (build, edit, run, measure, snapshot, undo), pages and docs, slides, teaching, flash cards and mastery, teacher assignments | `lib/tools/registry.ts` |
+| **7. Verification** | lint + autofix + repair loop · edit-plan verification · arithmetic recomputation · storyboard lint · floating-pin check · **numbers measured by the simulator** | see [table](docs/PIPELINE.md#7-verification-what-stands-between-a-models-output-and-the-student) |
+| **8. Outputs** | a wired simulation on the canvas · notes and LaTeX · a verified, undoable edit · a **narrated interactive lesson** (predict-then-reveal, neural voice) · a worked solution · a page tour · flash cards, slides, study notes | `lib/lesson/`, `lib/ai/apply-ops.ts` |
+
+Worked end to end in the doc: **a photographed exam question → solved on a board with every calculation checked**, **a PDF taught page by page**, and **"how fast is the ball?" answered by a tool loop against the live simulation**.
+
 ## Results
 
 Measured on an RTX 4060 Laptop (8 GB). Scenes are judged by **executing them in the real simulator**, not by a person or another model
@@ -96,12 +113,12 @@ flowchart LR
 1. **Models.** Two jobs, two models. **SIMBLIP Lite**, a Qwen3-0.6B fine-tune, *draws* (writes SimScript); a larger Qwen3-8B *plans, explains and picks tools*. Lanes are aliases in [`ai-server/models.json`](ai-server/models.json), so a model can be swapped without changing code. A 1.7B tier runs **on-device in the browser** (wllama, WebGPU/WASM) through the same pipeline.
 2. **Fine-tuning.** Training data is **generated, not scraped**: recipes write good scenes, every one is **run in the simulator and scored**, and only passing rows survive (6,409 of 7,000 candidates at v3). QLoRA, 20.2 M trainable parameters, 60 minutes on a laptop GPU. → [`docs/FINE_TUNING.md`](docs/FINE_TUNING.md)
 3. **Verification is free, generation is not.** The linter checks everything decidable from the text against the *runtime's own registries*, in microseconds, so the common case pays nothing for safety and only a real failure costs a model round (max 2). Measured: the earlier 103-tool agent used 17,981 prompt tokens and up to 24 rounds; this uses 1,021 tokens and one.
-4. **Tools.** 26 tools in one registry; the on-device agent, the MCP bridge (so Claude Code or any MCP client can drive the notebook) and WebMCP are all adapters over it. A small model is shown **at most 4** candidate tools, not 40.
+4. **Tools.** 31 tools in one registry; the on-device agent, the MCP bridge (so Claude Code or any MCP client can drive the notebook) and WebMCP are all adapters over it. A small model is shown **at most 4** candidate tools, not 40.
 5. **Lessons.** "Teach me X" becomes a narrated, interactive film. The model only chooses *what to show*; the simulator measures every result; a wrong-lesson guard stops an authored lesson playing for the wrong topic; the planner may answer *unsure*; a film with nothing simulatable says it is **not verified**.
 6. **Serving.** [`ai-server/`](ai-server) is an Ollama-compatible gateway with constant-time bearer auth, a per-client rate limit, a bounded FIFO queue (one 8 GB GPU is not a free-for-all), cancel-on-disconnect and content-free logs. Zero dependencies.
 7. **Trust.** The AI has no private way to change anything: every tool wraps an action a user can already perform, so it syncs, persists and **undoes** for free. Permission gate at the registry; injected lesson text is fenced data; hostile arguments never throw.
 
-Read next: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) has the diagrams and the five request flows step by step.
+Read next: [`docs/PIPELINE.md`](docs/PIPELINE.md) follows the data from input to output; [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) has the layer diagrams and the five request flows.
 
 ## Run it
 
@@ -140,7 +157,7 @@ Optional neural narration voice: `bash ai-server/tts/setup.sh && npm run ai-tts`
 ai-server/            Ollama-compatible gateway: auth · queue · lane aliases · Kokoro TTS sidecar · tests
 lib/ai/               generation pipeline, linter, autofix, router, edit ops, explain, arithmetic check,
                       placement, quality scorer, on-device engine (engine/), tutor agent (tutor/)
-lib/tools/            the 26-tool registry, MCP/WebMCP bridge, red-team tests
+lib/tools/            the 31-tool registry, MCP/WebMCP bridge, red-team tests
 lib/lesson/           Director, planner, solver, storyboard, player, stage, teacher
 lib/learning/         FSRS scheduler, BM25 retrieval, flash cards, hint ladder (no model)
 lib/sketch/           sketch → Scene IR → SimScript compiler; trainable stroke recognizer
@@ -150,7 +167,7 @@ scripts/mcp/          the MCP server
 models/               LoRA adapter + how to get the GGUFs
 data/                 the v5 fine-tuning set (gz) and the quality-gate report
 results/              every scored output and loss curve behind the numbers above
-docs/                 ARCHITECTURE · FINE_TUNING · EVALUATION · AI_USAGE_DISCLOSURE · LIMITATIONS · HISTORY · decisions log
+docs/                 PIPELINE · ARCHITECTURE · FINE_TUNING · EVALUATION · AI_USAGE_DISCLOSURE · LIMITATIONS · HISTORY · decisions log
 SUBSTRATE.md          the vendored simulator (read-only) the AI runs against
 content/courses/      125 authored lessons the Lesson Player can convert (used by tests)
 ```

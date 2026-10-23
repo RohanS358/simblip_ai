@@ -46,9 +46,10 @@ Branches dated *today* (`chore/…`, `docs/…`, `feature/teach-material-solve`)
 | 36 | `docs/readme-evaluator-guide-history` | README, evaluator guide, HISTORY, verifier demo | 2026-10-23 → 2026-10-23 | 5 | — |
 | 37 | `docs/history-final` | This table brought up to date | 2026-10-23 → 2026-10-23 | 1 | — |
 | 38 | `docs/substrate-redaction-note` | Record the one redaction in the vendored simulator | 2026-10-23 → 2026-10-23 | 1 | — |
+| 39 | `docs/data-to-output-pipeline` | docs/PIPELINE.md: inputs, ingestion, routing, agents, tools, verification, outputs; tool count corrected to 31 | 2026-10-23 → 2026-10-23 | 2 | — |
 
 
-**38 branches.**
+**39 branches.**
 
 Every branch is still present on the remote (`git branch -r`), so you can check any stage out and read the code as it was at that point.
 
