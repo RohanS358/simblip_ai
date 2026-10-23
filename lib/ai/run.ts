@@ -14,7 +14,7 @@ import { SIMSCRIPT_SYSTEM_PROMPT } from '@/lib/ai/simscript-corpus'
 import { classifyIntent, type Intent } from '@/lib/ai/route-intent'
 import { generateEditPlan, EditFailedError } from '@/lib/ai/edit'
 import { explain, EXPLAIN_SYSTEM_PROMPT, toAnswerBlocks } from '@/lib/ai/explain'
-import { classifyPicture, pictureReply } from '@/lib/ai/picture'
+import { classifyPicture, pictureReply, sanitizeSvg, svgDataUri, SVG_SYSTEM_PROMPT } from '@/lib/ai/picture'
 
 export const aiRequestSchema = z.object({
   prompt: z.string().min(1).max(4000),
@@ -203,7 +203,8 @@ export async function runAi(req: AiRequest, deps: RunDeps): Promise<void> {
     }
     // A request for a PICTURE is answered honestly before anything else: a text
     // model cannot make a photo, and ASCII art passed off as one is a wrong
-    // answer. No model call for the reply.
+    // answer. No model call for the reply; code for a simple SVG is the one
+    // picture a text model can really write.
     const pic = classifyPicture(req.prompt, req.history?.at(-1)?.prompt)
     if (pic?.kind === 'photo') {
       emit({ event: 'intent', data: 'explain' })
@@ -211,6 +212,19 @@ export async function runAi(req: AiRequest, deps: RunDeps): Promise<void> {
       // failure in the panel.
       const reply = pictureReply(pic.subject)
       return done({ message: 'No picture can be made from text — here is what works.', answer: reply, blocks: toAnswerBlocks(reply) })
+    }
+    if (pic?.kind === 'svg') {
+      emit({ event: 'intent', data: 'explain' })
+      const raw = await (await deps.explain()).generate(SVG_SYSTEM_PROMPT, `Draw: ${pic.subject}`, undefined, undefined, 1200)
+      const out = sanitizeSvg(raw)
+      if ('error' in out) return done({ message: `${out.error} Try again, or upload a real image instead.` })
+      const markdown = `\`\`\`svg\n${out.svg}\n\`\`\`\n\n${out.note || 'Save this as a .svg file and open it in any browser.'}`
+      return done({
+        message: 'Here is the drawing and its SVG code. Add it to your notebook as a picture, or save the code as a .svg file.',
+        answer: markdown,
+        blocks: toAnswerBlocks(markdown),
+        images: [{ src: svgDataUri(out.svg), alt: `${pic.subject} (drawn as SVG)` }],
+      })
     }
 
     // Tools first: "run it", "how fast is the ball?" have exact answers that

@@ -20,6 +20,15 @@ export const answerBlockSchema = z.object({
   content: z.string(),
 })
 
+/** A picture shown in the thread: a real photo (Wikimedia Commons, with its
+ *  licence) or an SVG diagram the assistant wrote. */
+export const answerImageSchema = z.object({
+  src: z.string().max(60_000),
+  alt: z.string().max(200),
+  href: z.string().max(500).optional(),
+  credit: z.string().max(200).optional(),
+})
+
 export const aiResponseSchema = z.object({
   /** Plain-language rationale shown next to the confirm button. */
   message: z.string(),
@@ -33,6 +42,8 @@ export const aiResponseSchema = z.object({
   /** The same answer pre-split into notebook objects, so the client can drop
    *  it onto a page without re-parsing the Markdown. */
   blocks: z.array(answerBlockSchema).optional(),
+  /** Pictures to show (and add to the notebook as image objects). */
+  images: z.array(answerImageSchema).max(8).optional(),
   /** A verified plan of edits to the page the user is on. Verified, NOT
    *  applied — the client previews it and the user confirms. Typed loosely
    *  here so lib/ai/edit-ops.ts stays the single source of truth for the op
@@ -48,5 +59,6 @@ export const aiResponseSchema = z.object({
 })
 
 export type AnswerBlock = z.infer<typeof answerBlockSchema>
+export type AnswerImage = z.infer<typeof answerImageSchema>
 
 export type AiResponse = z.infer<typeof aiResponseSchema>

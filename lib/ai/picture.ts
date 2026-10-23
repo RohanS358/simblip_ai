@@ -60,6 +60,10 @@ const PICTURE_RES: { re: RegExp; maxWords: number; explicit?: boolean }[] = [
 const NOT_A_SUBJECT_RE =
   /^(?:in|on|at|as|by|with|of|for|to|and|or|please|any|how|why|what|when|where|which|who|whether|if|that|this|it|them|me|more|another|answer|solution|steps?|work|working|result|results|code|example|examples|derivation|proof|explanation|summary|notes?|formula|equation|list|table|difference|meaning|definition|everything|anything|something|all)\b/i
 
+/** The student asks for code / a vector file / "create it yourself". */
+const CODE_RE = /\b(?:svg|vector|code|html canvas|draw it yourself|create (?:the )?(?:image|picture) yourself|make it yourself)\b/i
+const CODE_SUBJECT_RE = /\b(?:svg|vector|code)\b[^.?!]*?\b(?:of|for|showing)\b\s+(?:an?\s+|the\s+)?(.+?)\s*[.?!]*$/i
+
 /** "in image", "as a picture", "the photo please": the answer to our own offer,
  *  with the subject taken from the previous request. */
 const FOLLOWUP_RE = /^(?:please\s+)?(?:(?:in|as|with|by)\s+(?:an?\s+)?(?:image|picture|photo|pic|diagram)s?|(?:an?\s+|the\s+)?(?:image|picture|photo|pic|diagram)s?(?:\s+please)?|show (?:it|them)(?:\s+(?:in|as)\s+(?:an?\s+)?(?:image|picture|photo))?)\s*[.!?]*$/i
@@ -76,6 +80,7 @@ const clean = (s: string) =>
 
 export type PictureAsk =
   | { kind: 'photo'; subject: string; want: 'photo' | 'diagram' }
+  | { kind: 'svg'; subject: string }
 
 /** `lastPrompt` is the previous user turn: "yes, give me the code" has no
  *  subject of its own, so it borrows the one the previous request named. */
@@ -93,6 +98,15 @@ export function classifyPicture(prompt: string, lastPrompt?: string): PictureAsk
       if (BUILDABLE_RE.test(s) || NOT_A_SUBJECT_RE.test(s)) continue
       return s
     }
+    return null
+  }
+
+  if (CODE_RE.test(p)) {
+    const direct = CODE_SUBJECT_RE.exec(p)?.[1]
+    const subject = (direct && clean(direct)) || subjectOf(p) || (lastPrompt ? subjectOf(lastPrompt) : null)
+    // "code" alone is common in programming questions ("code for bubble sort"):
+    // only treat it as a picture request when the subject is a picture subject.
+    if (subject && !BUILDABLE_RE.test(subject)) return { kind: 'svg', subject }
     return null
   }
 
@@ -120,3 +134,49 @@ export function pictureReply(subject: string, searchFailed = false): string {
     `3. **Get code for a simple illustration.** Reply “SVG code for ${subject}” and I will write a compact, self-contained SVG you can save as a .svg file and open in any browser.`,
   ].join('\n')
 }
+
+export const SVG_SYSTEM_PROMPT = `You write small, efficient SVG illustrations.
+Output ONE fenced code block tagged svg and then ONE sentence on how to use it. Nothing else.
+Rules for the SVG:
+- Start with <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">.
+- Flat, recognisable silhouette first, then 2-4 details (eyes, mouth, limbs). No gradients, filters or images.
+- Use only: g, path, circle, ellipse, rect, polygon, line. Reuse shapes with <g> and transform instead of repeating them.
+- At most 25 elements and under 2500 characters in total. Round coordinates to whole numbers.
+- No text, no scripts, no event attributes, no external links.
+- Use at most 4 solid colours via fill/stroke attributes.`
+
+const ALLOWED = new Set(['svg', 'g', 'path', 'circle', 'ellipse', 'rect', 'polygon', 'polyline', 'line', 'defs', 'title'])
+const MAX_CHARS = 3500
+const MAX_ELEMENTS = 40
+
+/** Pull the SVG out of a model reply and refuse anything unsafe or bloated.
+ *  An SVG can carry script and external fetches, so this is an allowlist, not
+ *  a blocklist: anything not named here fails. */
+export function sanitizeSvg(raw: string): { svg: string; note: string } | { error: string } {
+  const fenced = /```(?:svg|xml|html)?\s*([\s\S]*?)```/i.exec(raw)
+  const body = (fenced?.[1] ?? raw).trim()
+  const start = body.indexOf('<svg')
+  const end = body.lastIndexOf('</svg>')
+  if (start < 0 || end < 0) return { error: 'The model did not return an SVG.' }
+  const svg = body.slice(start, end + 6)
+  if (svg.length > MAX_CHARS) return { error: 'The SVG came out too large to be efficient.' }
+  const tags = [...svg.matchAll(/<\/?\s*([a-zA-Z][\w:-]*)/g)].map((m) => m[1].toLowerCase())
+  if (tags.some((t) => !ALLOWED.has(t))) return { error: 'The SVG used an element that is not allowed.' }
+  if (tags.filter((t) => t !== 'svg' && t !== 'g').length > MAX_ELEMENTS * 2) return { error: 'The SVG has too many elements.' }
+  if (/\son[a-z]+\s*=|javascript:|<!\[CDATA|<!ENTITY|href\s*=|xlink:|url\s*\(\s*(?!#)/i.test(svg)) return { error: 'The SVG contained a link or script and was blocked.' }
+  // Opening tags must be balanced (self-closing ones excluded) or it will not render.
+  const opens = [...svg.matchAll(/<([a-zA-Z][\w-]*)\b[^>]*?(\/?)>/g)].filter((m) => m[2] !== '/').length
+  const closes = [...svg.matchAll(/<\/[a-zA-Z][\w-]*\s*>/g)].length
+  if (opens !== closes) return { error: 'The SVG was malformed.' }
+  let withNs = /xmlns\s*=/.test(svg) ? svg : svg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"')
+  // An SVG with only a viewBox has no intrinsic size, so as an image it
+  // measures 0x0 or a browser default. Give it one.
+  const head = /^<svg\b[^>]*>/.exec(withNs)?.[0] ?? ''
+  if (head && !/\swidth\s*=/.test(head)) withNs = withNs.replace(head, head.replace('<svg', '<svg width="320" height="320"'))
+  const note = (fenced ? body.slice(0, 0) : '') + raw.slice(raw.lastIndexOf('```') + 3).trim().split('\n')[0].slice(0, 200)
+  return { svg: withNs, note }
+}
+
+/** An SVG as an <img>-safe data URI. Inside <img> an SVG cannot run script or
+ *  load anything — a second line of defence behind sanitizeSvg. */
+export const svgDataUri = (svg: string): string => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
